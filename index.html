@@ -71,13 +71,19 @@ header p{font-size:10px;color:var(--sub);}
          margin:10px 10px 0;overflow:hidden;}
 canvas#dg{display:block;width:100%;}
 
-/* ── Metric cards ── */
-#metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:6px 10px;}
-.metric{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);padding:7px 10px;}
-.metric .mi{font-size:11px;color:var(--accent);}
-.metric .mt{font-size:10px;color:var(--sub);line-height:1.3;}
-.metric .mv{font-size:18px;font-weight:700;color:var(--accent);line-height:1.1;font-variant-numeric:tabular-nums;}
-.metric .mu{font-size:10px;color:var(--sub);}
+/* ── Hardware header ── */
+#hw-head{padding:6px 10px 2px;border-bottom:1px solid var(--border);}
+.hw-row{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:11px;}
+.hw-icon{font-size:12px;width:16px;text-align:center;}
+.hw-lbl{color:var(--sub);min-width:26px;font-size:10px;}
+.hw-val{color:var(--text);font-weight:500;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+/* ── Key metrics (now in right panel) ── */
+#key-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:6px 10px 2px;}
+.metric{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:6px 8px;}
+.metric .mi{font-size:10px;color:var(--accent);}
+.metric .mt{font-size:9px;color:var(--sub);line-height:1.3;}
+.metric .mv{font-size:16px;font-weight:700;color:var(--accent);line-height:1.1;font-variant-numeric:tabular-nums;}
+.metric .mu{font-size:9px;color:var(--sub);}
 
 /* ── Result rows ── */
 .rrow{display:flex;align-items:center;padding:5px 12px;border-bottom:1px solid var(--border);}
@@ -255,14 +261,7 @@ canvas#dg{display:block;width:100%;}
 <div class="panel" id="center">
   <div id="vwarn" class="hide">⚠️ <span id="vwarn-msg"></span></div>
   <div id="dg-wrap"><canvas id="dg"></canvas></div>
-  <div id="metrics">
-    <div class="metric"><div class="mi">⏱</div><div class="mt">來回掃描 TT</div><div class="mv" id="m-tt">—</div><div class="mu">分鐘</div></div>
-    <div class="metric"><div class="mi">→</div><div class="mt">掃描速度</div><div class="mv" id="m-spd">—</div><div class="mu">mm/s</div></div>
-    <div class="metric"><div class="mi">🔍</div><div class="mt">系統解析度</div><div class="mv" id="m-res">—</div><div class="mu">µm/px</div></div>
-    <div class="metric"><div class="mi">📷</div><div class="mt">單道拍攝</div><div class="mv" id="m-cap">—</div><div class="mu">張/道</div></div>
-    <div class="metric"><div class="mi">↕</div><div class="mt">掃描道數</div><div class="mv" id="m-pas">—</div><div class="mu">道</div></div>
-    <div class="metric"><div class="mi">⚡</div><div class="mt">數據流量</div><div class="mv" id="m-df">—</div><div class="mu">GB/s</div></div>
-  </div>
+
   <div style="padding:0 10px 12px">
     <div class="shdr" style="padding-left:2px">📝 備註</div>
     <textarea id="eval-notes" placeholder="輸入備註..."
@@ -280,7 +279,21 @@ canvas#dg{display:block;width:100%;}
 
   <!-- Results pane -->
   <div id="pane-res">
-    <div class="shdr" style="padding-top:6px">🔭 光學規格</div>
+    <!-- Hardware config -->
+    <div id="hw-head">
+      <div class="hw-row"><span class="hw-icon">📷</span><span class="hw-lbl">相機</span><span class="hw-val" id="hw-cam">手動輸入</span></div>
+      <div class="hw-row"><span class="hw-icon">🔭</span><span class="hw-lbl">鏡頭</span><span class="hw-val" id="hw-lens">手動輸入</span></div>
+    </div>
+    <!-- Key metrics -->
+    <div id="key-metrics">
+      <div class="metric"><div class="mi">⏱</div><div class="mt">來回掃描 TT</div><div class="mv" id="m-tt">—</div><div class="mu">min</div></div>
+      <div class="metric"><div class="mi">🔍</div><div class="mt">系統解析度</div><div class="mv" id="m-res">—</div><div class="mu">µm/px</div></div>
+      <div class="metric"><div class="mi">→</div><div class="mt">掃描速度</div><div class="mv" id="m-spd">—</div><div class="mu">mm/s</div></div>
+      <div class="metric"><div class="mi">📷</div><div class="mt">單道拍攝</div><div class="mv" id="m-cap">—</div><div class="mu">張/道</div></div>
+      <div class="metric"><div class="mi">↕</div><div class="mt">掃描道數</div><div class="mv" id="m-pas">—</div><div class="mu">道</div></div>
+      <div class="metric"><div class="mi">⚡</div><div class="mt">數據流量</div><div class="mv" id="m-df">—</div><div class="mu">GB/s</div></div>
+    </div>
+    <div class="shdr" style="padding-top:4px">🔭 光學規格</div>
     <div class="card">
       <div class="rrow"><span class="rl">系統解析度</span><span class="rv" id="r-or">—</span><span class="ru">µm/px</span></div>
       <div class="rrow"><span class="rl">感測器對角線</span><span class="rv" id="r-dg">—</span><span class="ru">mm</span></div>
@@ -497,6 +510,10 @@ function fmt(v,d=2){ return (!isFinite(v)||v===0)?'—':v.toFixed(d); }
 function calc(){
   const p = P(); lastP=p;
   const r = calculate(p); lastR=r;
+  const ci=document.getElementById('cam-pick').value;
+  const li=document.getElementById('lens-pick').value;
+  set('hw-cam', ci!==''?CAMS[+ci].n:'手動輸入');
+  set('hw-lens', li!==''?LENS[+li].n:'手動輸入');
 
   // Vignette
   const vw=document.getElementById('vwarn');
@@ -539,7 +556,7 @@ function drawDiagram(p,r){
   const canvas=document.getElementById('dg');
   const wrap=document.getElementById('dg-wrap');
   const dpr=window.devicePixelRatio||1;
-  const cssW=wrap.clientWidth||600, cssH=200;
+  const cssW=wrap.clientWidth||700, cssH=240;
   canvas.style.width=cssW+'px'; canvas.style.height=cssH+'px';
   canvas.width=cssW*dpr; canvas.height=cssH*dpr;
   const ctx=canvas.getContext('2d');
@@ -550,7 +567,7 @@ function drawDiagram(p,r){
   ctx.fillStyle=dark?'#1c1c1e':'#f5f5f7';
   ctx.fillRect(0,0,W,H);
 
-  const PL=46,PR=14,PT=30,PB=58;
+  const PL=46,PR=14,PT=36,PB=58;
   const dW=W-PL-PR, dH=H-PT-PB;
   const ox=PL, oy=PT;
   if(r.shiftEdge<=0||r.scanEdge<=0) return;
@@ -559,7 +576,7 @@ function drawDiagram(p,r){
   const passes=Math.max(1,Math.round(r.passes));
   const ovFrac=p.overlap/100;
 
-  // ── Schematic camera width ──
+  // ── Camera width ──
   const trueSx=dW/r.shiftEdge;
   const trueCamW=r.fovShift*trueSx;
   const minCamPx=22, maxCamPx=Math.max(minCamPx,dW*0.6/nCams);
@@ -570,26 +587,30 @@ function drawDiagram(p,r){
   const fitP=stepPx>0?Math.floor((dW-camAW)/stepPx)+1:1;
   const visP=Math.min(passes,Math.max(1,fitP),12);
 
-  // ── Y schematic frames ──
+  // ── Y frame geometry ──
   const nSl=7;
   const fH=Math.max(dH/(nSl+1),10);
-  const sfY=fH*(1-ovFrac);
-  const ovH=fH*ovFrac;
+  const sfY=fH*(1-ovFrac);  // step between frames (non-overlap portion)
+  const ovH=fH*ovFrac;       // overlap zone height
 
-  // Palette
   const pal=['#007aff','#32ade6','#30b0c7','#5856d6','#af52de','#ff9500','#34c759','#ff2d55'];
+  const ovFill=dark?'rgba(255,196,0,0.22)':'rgba(255,149,0,0.20)';
+  const ovStroke=dark?'rgba(255,196,0,0.65)':'rgba(200,100,0,0.50)';
 
-  // Sample bg
+  // ── Sample area background ──
   ctx.fillStyle=dark?'#2c2c2e':'#f0f0f3';
   ctx.fillRect(ox,oy,dW,dH);
   ctx.strokeStyle=dark?'#636366':'#8e8e93';
   ctx.lineWidth=1.5; ctx.strokeRect(ox,oy,dW,dH);
 
-  // Draw passes
+  // ── Draw passes ──
   for(let pi=0;pi<visP;pi++){
     const passX=ox+pi*stepPx;
     if(passX>=ox+dW) break;
-    const isF=pi===0, dim=isF?1:0.42;
+    const isF=pi===0;
+    const dim=isF?1.0:0.50;
+    const hex0=pal[pi%pal.length];
+
     for(let ci=0;ci<nCams;ci++){
       const cX=passX+ci*camW+gapW*0.5;
       if(cX>=ox+dW) break;
@@ -597,42 +618,67 @@ function drawDiagram(p,r){
       if(cW2<=0) break;
       const hex=pal[(pi*nCams+ci)%pal.length];
 
-      // Base fill
+      // 1. Column base tint
       ctx.fillStyle=ha(hex,0.06*dim);
       ctx.fillRect(cX,oy,cW2,dH);
 
-      // Gradient frame bands
+      // 2. Alternating solid frame bands (even/odd frames differ in shade)
       for(let si=0;si<nSl*2;si++){
         const fy=oy+si*sfY;
         if(fy>=oy+dH) break;
         const fh=Math.min(fH,oy+dH-fy);
-        if(fh<=0) break;
-        const g=ctx.createLinearGradient(cX,fy,cX,fy+fh);
-        g.addColorStop(0,ha(hex,0.04*dim));
-        g.addColorStop(0.82,ha(hex,0.25*dim));
-        g.addColorStop(1,ha(hex,0.18*dim));
-        ctx.fillStyle=g; ctx.fillRect(cX,fy,cW2,fh);
-        // Overlap zone
-        if(si>0&&ovH>0){
-          ctx.fillStyle=ha(hex,0.20*dim);
-          ctx.fillRect(cX,fy,cW2,Math.min(ovH,fh));
+        ctx.fillStyle=ha(hex,(si%2===0?0.18:0.09)*dim);
+        ctx.fillRect(cX,fy,cW2,fh);
+      }
+
+      // 3. Overlap zones — amber highlight at start of each frame (si≥1)
+      if(ovH>1.5){
+        for(let si=1;si<nSl*2;si++){
+          const fy=oy+si*sfY;
+          if(fy>=oy+dH) break;
+          const oh=Math.min(ovH,oy+dH-fy);
+          if(oh<=0) break;
+          ctx.fillStyle=ovFill;
+          ctx.fillRect(cX,fy,cW2,oh);
         }
       }
 
-      // Header bar (first pass)
-      if(isF){
-        const hH=Math.min(fH*0.65,18);
-        ctx.fillStyle=ha(hex,0.72); ctx.fillRect(cX,oy,cW2,hH);
-        ctx.strokeStyle=ha(hex,0.32); ctx.lineWidth=0.8;
-        ctx.strokeRect(cX,oy,cW2,dH);
-        // Label
-        if(cW2>8){
-          ctx.fillStyle='rgba(255,255,255,0.9)';
-          ctx.font=`bold ${Math.min(9,cW2*0.8)}px -apple-system,sans-serif`;
-          ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillText('C'+(ci+1), cX+cW2/2, oy+Math.min(hH/2,9));
-        }
+      // 4. Frame boundary lines (dashed) at each frame start
+      ctx.save();
+      ctx.strokeStyle=ha(hex,0.45*dim);
+      ctx.lineWidth=0.8;
+      ctx.setLineDash([3,2]);
+      for(let si=1;si<nSl*2;si++){
+        const fy=oy+si*sfY;
+        if(fy>=oy+dH) break;
+        ctx.beginPath(); ctx.moveTo(cX,fy); ctx.lineTo(cX+cW2,fy); ctx.stroke();
       }
+      ctx.setLineDash([]); ctx.restore();
+
+      // 5. Column border
+      ctx.strokeStyle=ha(hex,0.35*dim);
+      ctx.lineWidth=isF?1.2:0.6;
+      ctx.strokeRect(cX,oy,cW2,dH);
+
+      // 6. Camera header bar with label
+      const hH=Math.min(16,dH*0.12);
+      ctx.fillStyle=ha(hex,0.78*dim);
+      ctx.fillRect(cX,oy,cW2,hH);
+      if(cW2>10){
+        ctx.fillStyle='rgba(255,255,255,0.95)';
+        ctx.font=`bold ${Math.min(9,cW2*0.75)}px -apple-system,sans-serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('C'+(ci+1), cX+cW2/2, oy+hH/2);
+      }
+    }
+
+    // 7. Pass label above diagram ("道N")
+    const grpCX=passX+camW*nCams/2;
+    if(grpCX<ox+dW+4){
+      ctx.fillStyle=ha(hex0,dim*0.9);
+      ctx.font=(isF?'bold ':'')+(isF?10:9)+'px -apple-system,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText('道'+(pi+1), Math.min(grpCX,ox+dW-4), oy-4);
     }
   }
 
@@ -650,6 +696,21 @@ function drawDiagram(p,r){
     ctx.fillStyle=dark?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)';
     ctx.font='8px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
     ctx.fillText(`${r.stepShift.toFixed(1)} mm/道`,(ox+ox+stepPx)/2,db2y+6);
+  }
+
+  // ── Legend ──
+  const lgX=ox+5, lgY=oy+dH-30, sw=8;
+  ctx.fillStyle=ha(pal[0],0.22); ctx.fillRect(lgX,lgY,sw,sw);
+  ctx.strokeStyle=ha(pal[0],0.55); ctx.lineWidth=0.8; ctx.strokeRect(lgX,lgY,sw,sw);
+  ctx.fillStyle=dark?'rgba(255,255,255,0.6)':'rgba(0,0,0,0.55)';
+  ctx.font='8px -apple-system,sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('拍攝區',lgX+sw+4,lgY+sw/2);
+  if(ovH>1.5){
+    const lgY2=lgY+13;
+    ctx.fillStyle=ovFill; ctx.fillRect(lgX,lgY2,sw,sw);
+    ctx.strokeStyle=ovStroke; ctx.lineWidth=0.8; ctx.strokeRect(lgX,lgY2,sw,sw);
+    ctx.fillStyle=dark?'rgba(255,255,255,0.6)':'rgba(0,0,0,0.55)';
+    ctx.fillText('重疊區',lgX+sw+4,lgY2+sw/2);
   }
 
   // ── Inset true-scale overview ──
@@ -679,25 +740,21 @@ function drawDiagram(p,r){
   const sc=dark?'rgba(255,255,255,0.45)':'rgba(0,0,0,0.4)';
   ctx.textBaseline='middle';
 
-  // Title
   ctx.fillStyle=tc; ctx.font='600 11px -apple-system,sans-serif';
   ctx.textAlign='center';
-  ctx.fillText('掃描示意圖 (示意非等比)', ox+dW/2, 16);
+  ctx.fillText('掃描示意圖 (示意非等比)',ox+dW/2,18);
 
-  // X axis label
   ctx.fillStyle=sc; ctx.font='10px -apple-system,sans-serif';
-  ctx.fillText(`換道方向  ${r.shiftEdge.toFixed(0)} mm  (${passes} 道)`, ox+dW/2, oy+dH+48);
+  ctx.fillText(`換道方向  ${r.shiftEdge.toFixed(0)} mm  (${passes} 道)`,ox+dW/2,oy+dH+48);
 
-  // Y axis label
   ctx.save(); ctx.translate(12,oy+dH/2); ctx.rotate(-Math.PI/2);
-  ctx.fillText(`掃描方向  ${r.scanEdge.toFixed(0)} mm`, 0, 0); ctx.restore();
+  ctx.fillText(`掃描方向  ${r.scanEdge.toFixed(0)} mm`,0,0); ctx.restore();
 
-  // Inset label
   ctx.fillStyle='rgba(0,122,255,0.85)'; ctx.font='600 8px -apple-system,sans-serif';
   ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('全局俯視', iX+iW/2, iY+7);
+  ctx.fillText('全局俯視',iX+iW/2,iY+7);
   ctx.fillStyle=sc; ctx.font='7px -apple-system,sans-serif';
-  ctx.fillText(`${r.shiftEdge.toFixed(0)}×${r.scanEdge.toFixed(0)} mm`, iX+iW/2, iY+iH-7);
+  ctx.fillText(`${r.shiftEdge.toFixed(0)}×${r.scanEdge.toFixed(0)} mm`,iX+iW/2,iY+iH-7);
 }
 
 function bracket(ctx,x1,x2,y,dark){
