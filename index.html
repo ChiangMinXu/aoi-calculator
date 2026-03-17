@@ -213,20 +213,21 @@ canvas#dg{display:block;width:100%;}
         <option value="">— 手動輸入 —</option>
       </select>
     </div>
-    <!-- Lens type: segmented -->
+    <!-- Lens type: 3-way segmented -->
     <div class="row">
       <label>鏡頭類型</label>
-      <span class="help" title="物鏡：以 NA 描述解析度，精密光學。&#10;CCTV：以焦距和 F# 描述，適合低倍率。">?</span>
+      <span class="help" title="物鏡：以 NA 描述，精密光學。&#10;遠心：物方遠心設計，適合精密量測。&#10;CCTV：以焦距和 F# 描述，適合低倍率。">?</span>
       <div class="seg" id="lens-type-seg">
-        <button class="on" onclick="setLensType(true)">物鏡</button>
-        <button onclick="setLensType(false)">CCTV</button>
+        <button class="on" onclick="setLensType('objective')">物鏡</button>
+        <button onclick="setLensType('telecentric')">遠心</button>
+        <button onclick="setLensType('cctv')">CCTV</button>
       </div>
     </div>
     <div class="row"><label>放大倍率</label><span class="help" title="系統解析度 = 像素大小 / 倍率。倍率↑→視野↓解析度↑">?</span><input type="number" id="p-mag" value="5" step="0.1" oninput="calc()"><span class="unit">×</span></div>
     <div class="row"><label>像圈直徑</label><span class="help" title="需大於感測器對角線，否則產生暗角（Vignetting）">?</span><input type="number" id="p-ic" value="25" step="0.5" oninput="calc()"><span class="unit">mm</span></div>
     <div class="row"><label>工作距離</label><input type="number" id="p-wd" value="34" step="1" oninput="calc()"><span class="unit">mm</span></div>
     <div class="row" id="row-na"><label>NA (數值孔徑)</label><span class="help" title="NA↑→解析度↑景深↓。5×≈0.14，10×≈0.28，20×≈0.42">?</span><input type="number" id="p-na" value="0.14" step="0.001" oninput="calc()"></div>
-    <div class="row" id="row-fn" style="display:none"><label>F# (光圈)</label><input type="number" id="p-fn" value="2.8" step="0.1" oninput="calc()"></div>
+    <div class="row" id="row-fn" style="display:none"><label>F# (光圈)</label><span class="help" title="遠心/CCTV 鏡頭光圈數。影響景深大小。遠心常見 F/8–F/11。">?</span><input type="number" id="p-fn" value="8" step="0.1" oninput="calc()"></div>
     <div class="row" id="row-fl" style="display:none"><label>焦距</label><input type="number" id="p-fl" value="50" step="1" oninput="calc()"><span class="unit">mm</span></div>
     <div class="row"><label>光源波長</label><span class="help" title="影響瑞利解析度計算。白光≈550nm，藍光≈450nm">?</span><input type="number" id="p-wl" value="550" step="10" oninput="calc()"><span class="unit">nm</span></div>
   </div>
@@ -354,21 +355,29 @@ const CAMS = [
   {n:"Teledyne Linea 8K (Line)",   px:5.0,  rw:8192,rh:1,   fps:40000,bit:8,color:false,line:true},
 ];
 const LENS = [
-  {n:"Mitutoyo M Plan Apo 2×",  mag:2,  ic:25,wd:34, na:0.055,obj:true, fn:2.8,fl:100},
-  {n:"Mitutoyo M Plan Apo 5×",  mag:5,  ic:25,wd:34, na:0.14, obj:true, fn:2.8,fl:40},
-  {n:"Mitutoyo M Plan Apo 10×", mag:10, ic:25,wd:34, na:0.28, obj:true, fn:2.8,fl:20},
-  {n:"Mitutoyo M Plan Apo 20×", mag:20, ic:25,wd:20, na:0.42, obj:true, fn:2.8,fl:10},
-  {n:"Mitutoyo M Plan Apo 50×", mag:50, ic:25,wd:13, na:0.55, obj:true, fn:2.8,fl:4},
-  {n:"Computar M5018-MP2 50mm", mag:1,  ic:16,wd:500,na:0,    obj:false,fn:1.8,fl:50},
-  {n:"Computar M3518-MP2 35mm", mag:1,  ic:16,wd:300,na:0,    obj:false,fn:1.8,fl:35},
-  {n:"Computar M2518-MP2 25mm", mag:1,  ic:16,wd:200,na:0,    obj:false,fn:1.8,fl:25},
-  {n:"Navitar NMV-50M1 50mm",   mag:1,  ic:16,wd:400,na:0,    obj:false,fn:2.8,fl:50},
+  // ── 物鏡 (Objective) ──
+  {n:"Mitutoyo M Plan Apo 2×",  type:'objective',   mag:2,    ic:25, wd:34,  na:0.055,fn:2.8, fl:100},
+  {n:"Mitutoyo M Plan Apo 5×",  type:'objective',   mag:5,    ic:25, wd:34,  na:0.14, fn:2.8, fl:40},
+  {n:"Mitutoyo M Plan Apo 10×", type:'objective',   mag:10,   ic:25, wd:34,  na:0.28, fn:2.8, fl:20},
+  {n:"Mitutoyo M Plan Apo 20×", type:'objective',   mag:20,   ic:25, wd:20,  na:0.42, fn:2.8, fl:10},
+  {n:"Mitutoyo M Plan Apo 50×", type:'objective',   mag:50,   ic:25, wd:13,  na:0.55, fn:2.8, fl:4},
+  // ── 遠心鏡頭 (Telecentric) ──
+  {n:"Opto Eng. TCAR 0.5×",     type:'telecentric', mag:0.5,  ic:22, wd:194, na:0,    fn:8,   fl:0},
+  {n:"Opto Eng. TCAR 1×",       type:'telecentric', mag:1.0,  ic:16, wd:130, na:0,    fn:8,   fl:0},
+  {n:"Opto Eng. TCAR 2×",       type:'telecentric', mag:2.0,  ic:11, wd:104, na:0,    fn:11,  fl:0},
+  {n:"Opto Eng. TC 0.098×",     type:'telecentric', mag:0.098,ic:44, wd:300, na:0,    fn:7.8, fl:0},
+  // ── CCTV 工業鏡頭 ──
+  {n:"Computar M5018-MP2 50mm", type:'cctv',        mag:1,    ic:16, wd:500, na:0,    fn:1.8, fl:50},
+  {n:"Computar M3518-MP2 35mm", type:'cctv',        mag:1,    ic:16, wd:300, na:0,    fn:1.8, fl:35},
+  {n:"Computar M2518-MP2 25mm", type:'cctv',        mag:1,    ic:16, wd:200, na:0,    fn:1.8, fl:25},
+  {n:"Navitar NMV-50M1 50mm",   type:'cctv',        mag:1,    ic:16, wd:400, na:0,    fn:2.8, fl:50},
 ];
 
 // ═══════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════
-let S = {lineScan:false, color:false, binning:false, objective:true,
+let S = {lineScan:false, color:false, binning:false,
+         lensType:'objective',   // 'objective' | 'telecentric' | 'cctv'
          scanAlongWidth:true};
 let evals = JSON.parse(localStorage.getItem('aoi_evals')||'[]');
 let lastR = {}, lastP = {};
@@ -387,11 +396,15 @@ function setCamType(line){ S.lineScan=line; segSet('cam-type-seg',line?1:0);
   calc(); }
 function setColor(c){ S.color=c; segSet('color-seg',c?1:0); calc(); }
 function setBin(b){ S.binning=b; segSet('bin-seg',b?1:0); calc(); }
-function setLensType(obj){ S.objective=obj; segSet('lens-type-seg',obj?0:1);
-  document.getElementById('row-na').style.display=obj?'':'none';
-  document.getElementById('row-fn').style.display=obj?'none':'';
-  document.getElementById('row-fl').style.display=obj?'none':'';
-  calc(); }
+function setLensType(t){
+  S.lensType=t;
+  const idx = t==='objective'?0 : t==='telecentric'?1 : 2;
+  segSet('lens-type-seg', idx);
+  document.getElementById('row-na').style.display = t==='objective'    ? '' : 'none';
+  document.getElementById('row-fn').style.display = t!=='objective'    ? '' : 'none';
+  document.getElementById('row-fl').style.display = t==='cctv'         ? '' : 'none';
+  calc();
+}
 function setScanDir(w){ S.scanAlongWidth=w; segSet('scan-dir-seg',w?0:1); calc(); }
 
 // ═══════════════════════════════════════════
@@ -404,7 +417,8 @@ function P(){
     lineScan:S.lineScan, color:S.color, binning:S.binning,
     mag:+v('p-mag'), imageCircle:+v('p-ic'), wd:+v('p-wd'),
     na:+v('p-na'), fn:+v('p-fn'), fl:+v('p-fl'),
-    objective:S.objective, wl:+v('p-wl'),
+    lensType:S.lensType,
+    objective:S.lensType==='objective', telecentric:S.lensType==='telecentric', wl:+v('p-wl'),
     sampleW:+v('p-sw'), sampleH:+v('p-sh'),
     scanAlongWidth:S.scanAlongWidth,
     nCams:+v('p-nc'), nRows:+v('p-nr'), overlap:+v('p-ov'),
@@ -468,6 +482,10 @@ function calculate(p){
 
   if(p.objective&&p.na>0){
     r.dof = (p.wl/(p.na*p.na*2))/1000;
+  } else if(p.telecentric&&p.fn>0){
+    // 遠心鏡頭：景深 ≈ 2 * F# * pixel_size_at_object / mag²
+    const pxObj = p.pixelSize/p.mag/1000; // mm，物方像素大小
+    r.dof = 2*p.fn*pxObj*1000; // µm
   } else {
     const delta=Math.max(r.sensorDiag/1730,p.pixelSize/1000);
     const F=p.fl,u=p.wd,N=p.fn;
@@ -509,7 +527,7 @@ function calc(){
   // Results
   set('r-or', fmt(r.optRes,3));   set('r-dg', fmt(r.sensorDiag,2));
   set('r-hf', fmt(r.hFOV,3));     set('r-vf', fmt(r.vFOV,3));
-  set('r-lr', p.objective?fmt(r.lensRes,3):'—'); set('r-mr', fmt(r.minDetRes,3));
+  set('r-lr', p.objective?fmt(r.lensRes,3):'—');  set('r-mr', fmt(r.minDetRes,3));
   set('r-df', fmt(r.dof,2));
   set('r-qty',fmt(r.totalOpt,0)); set('r-se', fmt(r.scanEdge,2));
   set('r-sh', fmt(r.shiftEdge,2));set('r-sp', fmt(r.speed,3));
@@ -725,8 +743,8 @@ function applyLens(){
   const i=document.getElementById('lens-pick').value; if(i==='')return;
   const l=LENS[+i];
   sv('p-mag',l.mag); sv('p-ic',l.ic); sv('p-wd',l.wd);
-  sv('p-na',l.na); sv('p-fn',l.fn); sv('p-fl',l.fl);
-  setLensType(l.obj); calc();
+  sv('p-na',l.na||0); sv('p-fn',l.fn||8); sv('p-fl',l.fl||50);
+  setLensType(l.type||'objective'); calc();
 }
 function sv(id,val){ document.getElementById(id).value=val; }
 
