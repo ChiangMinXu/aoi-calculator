@@ -17,7 +17,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.4;}
 
 /* ── App shell ── */
-#app{display:grid;grid-template-columns:270px 1fr 320px;grid-template-rows:44px 1fr;height:100vh;overflow:hidden;}
+#app{display:grid;grid-template-columns:260px 1fr 360px;grid-template-rows:44px 1fr;height:100vh;overflow:hidden;}
 header{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 16px;
        background:var(--surf);border-bottom:1px solid var(--border);z-index:10;}
 header h1{font-size:14px;font-weight:700;}
@@ -68,7 +68,8 @@ header p{font-size:10px;color:var(--sub);}
 
 /* ── Diagram ── */
 #dg-wrap{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);
-         margin:10px 10px 0;overflow:hidden;}
+         margin:10px 10px 6px;overflow:hidden;
+         height:calc(100vh - 44px - 96px);}
 canvas#dg{display:block;width:100%;}
 
 /* ── Hardware header ── */
@@ -262,10 +263,10 @@ canvas#dg{display:block;width:100%;}
   <div id="vwarn" class="hide">⚠️ <span id="vwarn-msg"></span></div>
   <div id="dg-wrap"><canvas id="dg"></canvas></div>
 
-  <div style="padding:0 10px 12px">
-    <div class="shdr" style="padding-left:2px">📝 備註</div>
+  <div style="padding:0 10px 8px;flex-shrink:0">
+    <div class="shdr" style="padding-left:2px;padding-top:4px">📝 備註</div>
     <textarea id="eval-notes" placeholder="輸入備註..."
-      style="width:100%;height:56px;padding:7px;font-size:12px;border:1px solid var(--border);
+      style="width:100%;height:48px;padding:6px 8px;font-size:12px;border:1px solid var(--border);
              border-radius:var(--rad);background:var(--surf);color:var(--text);resize:none;outline:none;"></textarea>
   </div>
 </div>
@@ -550,219 +551,208 @@ function calc(){
 function set(id,v){ document.getElementById(id).textContent=v; }
 
 // ═══════════════════════════════════════════
-// SCAN DIAGRAM
+// SCAN DIAGRAM — panel + camera grid
 // ═══════════════════════════════════════════
-function drawDiagram(p,r){
-  const canvas=document.getElementById('dg');
-  const wrap=document.getElementById('dg-wrap');
-  const dpr=window.devicePixelRatio||1;
-  const cssW=wrap.clientWidth||700, cssH=240;
-  canvas.style.width=cssW+'px'; canvas.style.height=cssH+'px';
-  canvas.width=cssW*dpr; canvas.height=cssH*dpr;
-  const ctx=canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  const W=cssW, H=cssH;
-  const dark=window.matchMedia('(prefers-color-scheme:dark)').matches;
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle=dark?'#1c1c1e':'#f5f5f7';
-  ctx.fillRect(0,0,W,H);
+function drawDiagram(p, r) {
+  const canvas = document.getElementById('dg');
+  const wrap   = document.getElementById('dg-wrap');
+  const dpr    = window.devicePixelRatio || 1;
+  const cssW   = wrap.clientWidth  || 500;
+  const cssH   = Math.max(wrap.clientHeight || 320, 180);
 
-  const PL=46,PR=14,PT=36,PB=58;
-  const dW=W-PL-PR, dH=H-PT-PB;
-  const ox=PL, oy=PT;
-  if(r.shiftEdge<=0||r.scanEdge<=0) return;
+  canvas.style.width  = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  canvas.width  = cssW * dpr;
+  canvas.height = cssH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = cssW, H = cssH;
+  const dark = window.matchMedia('(prefers-color-scheme:dark)').matches;
 
-  const nCams=Math.max(1,Math.round(p.nCams));
-  const passes=Math.max(1,Math.round(r.passes));
-  const ovFrac=p.overlap/100;
+  // ── Color tokens ──
+  const bgC     = dark ? '#1c1c1e' : '#f5f5f7';
+  const textC   = dark ? '#f5f5f7' : '#1d1d1f';
+  const subC    = dark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.38)';
+  const panelBg = dark ? '#28282a' : '#e8ecf2';
+  const panelBr = dark ? '#555'    : '#999';
+  const pal = ['#007aff','#32ade6','#5856d6','#af52de','#ff9500','#34c759','#ff2d55','#30b0c7'];
 
-  // ── Camera width ──
-  const trueSx=dW/r.shiftEdge;
-  const trueCamW=r.fovShift*trueSx;
-  const minCamPx=22, maxCamPx=Math.max(minCamPx,dW*0.6/nCams);
-  const camW=Math.min(Math.max(trueCamW,minCamPx),maxCamPx);
-  const gapW=Math.max(camW*0.18,3);
-  const camAW=camW-gapW;
-  const stepPx=camW*nCams*(1-ovFrac);
-  const fitP=stepPx>0?Math.floor((dW-camAW)/stepPx)+1:1;
-  const visP=Math.min(passes,Math.max(1,fitP),12);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = bgC;
+  ctx.fillRect(0, 0, W, H);
 
-  // ── Y frame geometry ──
-  const nSl=7;
-  const fH=Math.max(dH/(nSl+1),10);
-  const sfY=fH*(1-ovFrac);  // step between frames (non-overlap portion)
-  const ovH=fH*ovFrac;       // overlap zone height
+  // ── Guard ──
+  if (!r.hFOV || r.hFOV <= 0 || !r.vFOV || r.vFOV <= 0 || r.shiftEdge <= 0 || r.scanEdge <= 0) {
+    ctx.fillStyle = subC;
+    ctx.font = '12px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('請輸入有效參數', W / 2, H / 2);
+    return;
+  }
 
-  const pal=['#007aff','#32ade6','#30b0c7','#5856d6','#af52de','#ff9500','#34c759','#ff2d55'];
-  const ovFill=dark?'rgba(255,196,0,0.22)':'rgba(255,149,0,0.20)';
-  const ovStroke=dark?'rgba(255,196,0,0.65)':'rgba(200,100,0,0.50)';
+  const nCams = Math.max(1, Math.round(p.nCams));
+  const nRows = Math.max(1, Math.round(p.nRows));
 
-  // ── Sample area background ──
-  ctx.fillStyle=dark?'#2c2c2e':'#f0f0f3';
-  ctx.fillRect(ox,oy,dW,dH);
-  ctx.strokeStyle=dark?'#636366':'#8e8e93';
-  ctx.lineWidth=1.5; ctx.strokeRect(ox,oy,dW,dH);
+  // Panel dimensions in mm:
+  //   cross-scan (換列) direction → drawn horizontally
+  //   scan direction              → drawn vertically
+  const xsMM = r.shiftEdge;          // horizontal (換列) mm
+  const scMM = r.scanEdge * nRows;   // vertical   (掃描) mm
 
-  // ── Draw passes ──
-  for(let pi=0;pi<visP;pi++){
-    const passX=ox+pi*stepPx;
-    if(passX>=ox+dW) break;
-    const isF=pi===0;
-    const dim=isF?1.0:0.50;
-    const hex0=pal[pi%pal.length];
+  // ── Layout margins ──
+  const PL = 50, PR = 56, PT = 38, PB = 54;
+  const drawW = W - PL - PR, drawH = H - PT - PB;
 
-    for(let ci=0;ci<nCams;ci++){
-      const cX=passX+ci*camW+gapW*0.5;
-      if(cX>=ox+dW) break;
-      const cW2=Math.min(camAW,ox+dW-cX);
-      if(cW2<=0) break;
-      const hex=pal[(pi*nCams+ci)%pal.length];
+  // Panel rect keeping aspect ratio
+  const panAsp = xsMM / scMM;   // width / height
+  let pW, pH;
+  if (drawW / drawH > panAsp) { pH = drawH; pW = pH * panAsp; }
+  else                         { pW = drawW; pH = pW / panAsp; }
+  const px0 = PL + (drawW - pW) / 2;
+  const py0 = PT + (drawH - pH) / 2;
 
-      // 1. Column base tint
-      ctx.fillStyle=ha(hex,0.06*dim);
-      ctx.fillRect(cX,oy,cW2,dH);
+  // Scale: mm → pixels (for true-scale reference only)
+  const scX = pW / xsMM, scY = pH / scMM;
 
-      // 2. Alternating solid frame bands (even/odd frames differ in shade)
-      for(let si=0;si<nSl*2;si++){
-        const fy=oy+si*sfY;
-        if(fy>=oy+dH) break;
-        const fh=Math.min(fH,oy+dH-fy);
-        ctx.fillStyle=ha(hex,(si%2===0?0.18:0.09)*dim);
-        ctx.fillRect(cX,fy,cW2,fh);
-      }
+  // Per-camera FOV at true scale
+  const trueFW = r.hFOV * scX, trueFH = r.vFOV * scY;
 
-      // 3. Overlap zones — amber highlight at start of each frame (si≥1)
-      if(ovH>1.5){
-        for(let si=1;si<nSl*2;si++){
-          const fy=oy+si*sfY;
-          if(fy>=oy+dH) break;
-          const oh=Math.min(ovH,oy+dH-fy);
-          if(oh<=0) break;
-          ctx.fillStyle=ovFill;
-          ctx.fillRect(cX,fy,cW2,oh);
-        }
-      }
+  // Minimum visible box size — if cameras are tiny vs panel, use schematic mode
+  const minBox   = 26;
+  const fovW     = Math.max(trueFW, minBox);
+  const fovH     = Math.max(trueFH, minBox);
+  const schematic = (trueFW < minBox * 0.75 || trueFH < minBox * 0.75);
 
-      // 4. Frame boundary lines (dashed) at each frame start
-      ctx.save();
-      ctx.strokeStyle=ha(hex,0.45*dim);
-      ctx.lineWidth=0.8;
-      ctx.setLineDash([3,2]);
-      for(let si=1;si<nSl*2;si++){
-        const fy=oy+si*sfY;
-        if(fy>=oy+dH) break;
-        ctx.beginPath(); ctx.moveTo(cX,fy); ctx.lineTo(cX+cW2,fy); ctx.stroke();
-      }
-      ctx.setLineDash([]); ctx.restore();
+  // ── Draw panel ──
+  ctx.fillStyle = panelBg;
+  ctx.fillRect(px0, py0, pW, pH);
+  ctx.strokeStyle = panelBr;
+  ctx.lineWidth = 1.5; ctx.setLineDash([]);
+  ctx.strokeRect(px0, py0, pW, pH);
 
-      // 5. Column border
-      ctx.strokeStyle=ha(hex,0.35*dim);
-      ctx.lineWidth=isF?1.2:0.6;
-      ctx.strokeRect(cX,oy,cW2,dH);
+  // Faint "面板" watermark
+  ctx.save();
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  ctx.font = `bold ${Math.min(36, pW * 0.16, pH * 0.30)}px -apple-system,sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('面板', px0 + pW / 2, py0 + pH / 2);
+  ctx.restore();
 
-      // 6. Camera header bar with label
-      const hH=Math.min(16,dH*0.12);
-      ctx.fillStyle=ha(hex,0.78*dim);
-      ctx.fillRect(cX,oy,cW2,hH);
-      if(cW2>10){
-        ctx.fillStyle='rgba(255,255,255,0.95)';
-        ctx.font=`bold ${Math.min(9,cW2*0.75)}px -apple-system,sans-serif`;
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText('C'+(ci+1), cX+cW2/2, oy+hH/2);
+  // ── Camera grid: nRows rows × nCams cols ──
+  const arrW = fovW * nCams;
+  const arrH = fovH * nRows;
+
+  for (let ri = 0; ri < nRows; ri++) {
+    for (let ci = 0; ci < nCams; ci++) {
+      const cx  = px0 + ci * fovW;
+      const cy  = py0 + ri * fovH;
+      const hex = pal[(ri * nCams + ci) % pal.length];
+
+      // Fill
+      ctx.fillStyle = ha(hex, 0.20);
+      ctx.fillRect(cx, cy, fovW, fovH);
+
+      // Border
+      ctx.strokeStyle = ha(hex, 0.82);
+      ctx.lineWidth = 1.3; ctx.setLineDash([]);
+      ctx.strokeRect(cx, cy, fovW, fovH);
+
+      // Label
+      if (fovW > 14 && fovH > 12) {
+        const fs = Math.max(7, Math.min(11, fovW * 0.30, fovH * 0.42));
+        ctx.fillStyle = ha(hex, 0.92);
+        ctx.font = `600 ${fs}px -apple-system,sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(nRows > 1 ? `R${ri+1}C${ci+1}` : `C${ci+1}`, cx + fovW/2, cy + fovH/2);
       }
     }
-
-    // 7. Pass label above diagram ("道N")
-    const grpCX=passX+camW*nCams/2;
-    if(grpCX<ox+dW+4){
-      ctx.fillStyle=ha(hex0,dim*0.9);
-      ctx.font=(isF?'bold ':'')+(isF?10:9)+'px -apple-system,sans-serif';
-      ctx.textAlign='center'; ctx.textBaseline='bottom';
-      ctx.fillText('道'+(pi+1), Math.min(grpCX,ox+dW-4), oy-4);
-    }
   }
 
-  // ── Dimension bracket: per-camera FOV ──
-  const db1x1=ox+gapW*0.5, db1x2=db1x1+camAW, db1y=oy+dH+8;
-  bracket(ctx,db1x1,db1x2,db1y,dark);
-  ctx.fillStyle=dark?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)';
-  ctx.font='8px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
-  ctx.fillText(`${r.fovShift.toFixed(2)} mm/台`,(db1x1+db1x2)/2,db1y+6);
-
-  // ── Dimension bracket: step per pass ──
-  if(visP>1&&stepPx>24){
-    const db2y=oy+dH+28;
-    bracket(ctx,ox,ox+stepPx,db2y,dark);
-    ctx.fillStyle=dark?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)';
-    ctx.font='8px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.fillText(`${r.stepShift.toFixed(1)} mm/道`,(ox+ox+stepPx)/2,db2y+6);
+  // ── True-scale inset (bottom-right, only in schematic mode) ──
+  if (schematic) {
+    const iW = Math.min(78, pW * 0.24), iH = Math.min(62, pH * 0.26);
+    const iX = px0 + pW - iW - 4, iY = py0 + pH - iH - 4;
+    ctx.fillStyle = dark ? 'rgba(44,44,46,0.93)' : 'rgba(255,255,255,0.93)';
+    ctx.fillRect(iX, iY, iW, iH);
+    ctx.strokeStyle = 'rgba(0,122,255,0.38)'; ctx.lineWidth = 1;
+    ctx.strokeRect(iX, iY, iW, iH);
+    // Blue dot = camera array footprint at true scale
+    const dotW = Math.max((trueFW * nCams) / pW * iW, 1.5);
+    const dotH = Math.max((trueFH * nRows) / pH * iH, 1.5);
+    ctx.fillStyle = 'rgba(0,122,255,0.72)';
+    ctx.fillRect(iX, iY, dotW, dotH);
+    ctx.fillStyle = subC;
+    ctx.font = '7px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('等比俯視', iX + iW / 2, iY + 3);
   }
 
-  // ── Legend ──
-  const lgX=ox+5, lgY=oy+dH-30, sw=8;
-  ctx.fillStyle=ha(pal[0],0.22); ctx.fillRect(lgX,lgY,sw,sw);
-  ctx.strokeStyle=ha(pal[0],0.55); ctx.lineWidth=0.8; ctx.strokeRect(lgX,lgY,sw,sw);
-  ctx.fillStyle=dark?'rgba(255,255,255,0.6)':'rgba(0,0,0,0.55)';
-  ctx.font='8px -apple-system,sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
-  ctx.fillText('拍攝區',lgX+sw+4,lgY+sw/2);
-  if(ovH>1.5){
-    const lgY2=lgY+13;
-    ctx.fillStyle=ovFill; ctx.fillRect(lgX,lgY2,sw,sw);
-    ctx.strokeStyle=ovStroke; ctx.lineWidth=0.8; ctx.strokeRect(lgX,lgY2,sw,sw);
-    ctx.fillStyle=dark?'rgba(255,255,255,0.6)':'rgba(0,0,0,0.55)';
-    ctx.fillText('重疊區',lgX+sw+4,lgY2+sw/2);
+  // ── Dimension bracket: camera FOV width (horizontal, inside/below array) ──
+  const bY = py0 + arrH + 7;
+  if (bY + 18 < py0 + pH) {
+    bracket(ctx, px0, px0 + fovW, bY, dark);
+    ctx.fillStyle = subC; ctx.font = '8px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(`${r.hFOV.toFixed(2)} mm`, px0 + fovW / 2, bY + 6);
   }
 
-  // ── Inset true-scale overview ──
-  const iW=Math.min(90,dW*0.22), iH=Math.min(80,dH*0.36);
-  const iX=ox+dW-iW, iY=oy+dH-iH;
-  ctx.fillStyle=dark?'rgba(44,44,46,0.95)':'rgba(255,255,255,0.95)';
-  ctx.fillRect(iX,iY,iW,iH);
-  ctx.strokeStyle='rgba(0,122,255,0.45)'; ctx.lineWidth=1;
-  ctx.strokeRect(iX,iY,iW,iH);
+  // ── Dimension bracket: camera FOV height (vertical, right margin) ──
+  const bX = px0 + pW + 8;
+  bracketV(ctx, py0, py0 + fovH, bX, dark);
+  ctx.fillStyle = subC; ctx.font = '8px -apple-system,sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText(`${r.vFOV.toFixed(2)} mm`, bX + 8, py0 + fovH / 2);
 
-  const tsx=iW/r.shiftEdge;
-  const tCam=r.fovShift*tsx*nCams;
-  const tStp=Math.max(r.stepShift*tsx,0.3);
-  for(let pi=0;pi<Math.min(passes,200);pi++){
-    const tx=iX+pi*tStp;
-    if(tx>=iX+iW) break;
-    const tw=Math.min(tCam,iX+iW-tx);
-    ctx.fillStyle=ha(pal[(pi*nCams)%pal.length],pi===0?0.55:0.20);
-    ctx.fillRect(tx,iY,Math.max(tw,0.3),iH);
-  }
-  const hlW=Math.min(visP*tStp,iW);
-  ctx.strokeStyle='rgba(0,122,255,0.9)'; ctx.lineWidth=1.5;
-  ctx.strokeRect(iX,iY,hlW,iH);
+  // ── Panel width label (bottom) ──
+  ctx.fillStyle = subC; ctx.font = '10px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText(`換列方向  ${xsMM.toFixed(0)} mm`, px0 + pW / 2, py0 + pH + 7);
 
-  // ── Text labels ──
-  const tc=dark?'#f5f5f7':'#1d1d1f';
-  const sc=dark?'rgba(255,255,255,0.45)':'rgba(0,0,0,0.4)';
-  ctx.textBaseline='middle';
+  // ── Panel height label (left, rotated) ──
+  ctx.save();
+  ctx.translate(PL - 14, py0 + pH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = subC; ctx.font = '10px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(`掃描方向  ${scMM.toFixed(0)} mm`, 0, 0);
+  ctx.restore();
 
-  ctx.fillStyle=tc; ctx.font='600 11px -apple-system,sans-serif';
-  ctx.textAlign='center';
-  ctx.fillText('掃描示意圖 (示意非等比)',ox+dW/2,18);
+  // ── Title ──
+  ctx.fillStyle = textC; ctx.font = '600 11px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('掃描示意圖' + (schematic ? '  (示意非等比)' : ''), W / 2, 16);
 
-  ctx.fillStyle=sc; ctx.font='10px -apple-system,sans-serif';
-  ctx.fillText(`換道方向  ${r.shiftEdge.toFixed(0)} mm  (${passes} 道)`,ox+dW/2,oy+dH+48);
+  // ── Camera count banner ──
+  ctx.fillStyle = '#007aff'; ctx.font = '600 10px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText(
+    `每排 ${nCams} 台 × ${nRows} 排 = 共 ${nCams * nRows} 台相機`,
+    px0 + pW / 2, py0 - 5
+  );
 
-  ctx.save(); ctx.translate(12,oy+dH/2); ctx.rotate(-Math.PI/2);
-  ctx.fillText(`掃描方向  ${r.scanEdge.toFixed(0)} mm`,0,0); ctx.restore();
-
-  ctx.fillStyle='rgba(0,122,255,0.85)'; ctx.font='600 8px -apple-system,sans-serif';
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('全局俯視',iX+iW/2,iY+7);
-  ctx.fillStyle=sc; ctx.font='7px -apple-system,sans-serif';
-  ctx.fillText(`${r.shiftEdge.toFixed(0)}×${r.scanEdge.toFixed(0)} mm`,iX+iW/2,iY+iH-7);
+  // ── Bottom info row ──
+  const infoY = py0 + pH + 26;
+  ctx.fillStyle = subC; ctx.font = '9px -apple-system,sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText(`單台 FOV: ${r.hFOV.toFixed(2)} × ${r.vFOV.toFixed(2)} mm`, px0, infoY);
+  ctx.textAlign = 'right';
+  ctx.fillText(`掃描道數: ${isFinite(r.passes) ? r.passes : '—'} 道`, px0 + pW, infoY);
 }
 
-function bracket(ctx,x1,x2,y,dark){
-  ctx.strokeStyle=dark?'rgba(255,255,255,0.35)':'rgba(0,0,0,0.3)';
-  ctx.lineWidth=0.9; ctx.beginPath();
-  ctx.moveTo(x1,y); ctx.lineTo(x1,y+5);
-  ctx.moveTo(x2,y); ctx.lineTo(x2,y+5);
-  ctx.moveTo(x1,y+2.5); ctx.lineTo(x2,y+2.5);
+function bracket(ctx, x1, x2, y, dark) {
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.28)';
+  ctx.lineWidth = 0.9; ctx.beginPath();
+  ctx.moveTo(x1, y); ctx.lineTo(x1, y + 5);
+  ctx.moveTo(x2, y); ctx.lineTo(x2, y + 5);
+  ctx.moveTo(x1, y + 2.5); ctx.lineTo(x2, y + 2.5);
+  ctx.stroke();
+}
+function bracketV(ctx, y1, y2, x, dark) {
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.28)';
+  ctx.lineWidth = 0.9; ctx.beginPath();
+  ctx.moveTo(x,     y1); ctx.lineTo(x + 5, y1);
+  ctx.moveTo(x,     y2); ctx.lineTo(x + 5, y2);
+  ctx.moveTo(x+2.5, y1); ctx.lineTo(x+2.5, y2);
   ctx.stroke();
 }
 function ha(hex,a){
@@ -849,7 +839,7 @@ function loadEval(i){
   document.getElementById('eval-name').value=e.name;
   document.getElementById('eval-notes').value=e.notes;
   setCamType(p.lineScan); setColor(p.color); setBin(p.binning);
-  setLensType(p.objective); setScanDir(p.scanAlongWidth);
+  setLensType(p.lensType||'objective'); setScanDir(p.scanAlongWidth);
   calc(); showTab('res');
 }
 function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.stringify(evals)); renderEvals(); }
@@ -873,6 +863,11 @@ function showTab(t){
 initPickers();
 calc();
 window.addEventListener('resize',()=>drawDiagram(lastP,lastR));
+// Redraw when the diagram wrapper changes size (flex layout)
+if(window.ResizeObserver){
+  new ResizeObserver(()=>drawDiagram(lastP,lastR))
+    .observe(document.getElementById('dg-wrap'));
+}
 </script>
 </body>
 </html>
