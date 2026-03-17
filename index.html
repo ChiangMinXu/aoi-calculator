@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AOI 光學架構評估計算器</title>
+<style>
+:root {
+  --bg:#f5f5f7; --surf:#fff; --surf2:#f2f2f7; --border:rgba(0,0,0,0.10);
+  --text:#1d1d1f; --sub:#6e6e73; --accent:#007aff;
+  --rad:10px; --shadow:0 1px 4px rgba(0,0,0,.08);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1c1c1e;--surf:#2c2c2e;--surf2:#3a3a3c;--border:rgba(255,255,255,.1);--text:#f5f5f7;--sub:#98989d;}
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.4;}
+
+/* ── App shell ── */
+#app{display:grid;grid-template-columns:290px 1fr 280px;grid-template-rows:44px 1fr;height:100vh;overflow:hidden;}
+header{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 16px;
+       background:var(--surf);border-bottom:1px solid var(--border);z-index:10;}
+header h1{font-size:14px;font-weight:700;}
+header p{font-size:10px;color:var(--sub);}
+.panel{overflow-y:auto;height:calc(100vh - 44px);}
+#left {background:var(--bg);border-right:1px solid var(--border);}
+#center{background:var(--bg);}
+#right {background:var(--surf2);border-left:1px solid var(--border);}
+
+/* ── Section header ── */
+.shdr{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;
+      padding:10px 14px 5px;color:var(--text);}
+.shdr svg{color:var(--accent);}
+
+/* ── Card ── */
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);
+      margin:0 10px 10px;overflow:hidden;}
+
+/* ── Row ── */
+.row{display:flex;align-items:center;gap:6px;padding:5px 12px;
+     border-bottom:1px solid var(--border);min-height:32px;}
+.row:last-child{border-bottom:none;}
+.row>label:first-child{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.unit{font-size:10px;color:var(--sub);min-width:22px;text-align:right;flex-shrink:0;}
+
+/* ── Inputs ── */
+.row input[type=number]{
+  width:84px;padding:2px 6px;border:1px solid var(--border);border-radius:5px;
+  background:var(--surf2);color:var(--text);font-size:12px;
+  font-family:'SF Mono',ui-monospace,monospace;text-align:right;outline:none;flex-shrink:0;
+}
+.row input[type=number]:focus{border-color:var(--accent);}
+.row input[type=text]{
+  flex:1;border:none;background:transparent;color:var(--text);font-size:13px;outline:none;text-align:right;
+}
+
+/* ── Segmented control ── */
+.seg{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;flex-shrink:0;}
+.seg button{flex:1;padding:3px 10px;border:none;background:transparent;color:var(--sub);
+            font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;transition:.15s;}
+.seg button.on{background:var(--accent);color:#fff;}
+
+/* ── Help badge ── */
+.help{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;
+      border-radius:50%;background:var(--border);color:var(--sub);font-size:9px;
+      cursor:help;flex-shrink:0;}
+
+/* ── DB picker row ── */
+.dbrow{padding:5px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+.dbrow label{font-size:11px;color:var(--sub);white-space:nowrap;}
+.dbrow select{flex:1;font-size:11px;border:1px solid var(--border);border-radius:5px;
+              background:var(--surf2);color:var(--text);padding:2px 5px;outline:none;}
+
+/* ── Diagram ── */
+#dg-wrap{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);
+         margin:10px 10px 0;overflow:hidden;}
+canvas#dg{display:block;width:100%;}
+
+/* ── Metric cards ── */
+#metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:8px 10px;}
+.metric{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);padding:9px 11px;}
+.metric .mi{font-size:11px;color:var(--accent);}
+.metric .mt{font-size:10px;color:var(--sub);line-height:1.3;}
+.metric .mv{font-size:20px;font-weight:700;color:var(--accent);line-height:1.1;font-variant-numeric:tabular-nums;}
+.metric .mu{font-size:10px;color:var(--sub);}
+
+/* ── Result rows ── */
+.rrow{display:flex;align-items:center;padding:5px 12px;border-bottom:1px solid var(--border);}
+.rrow:last-child{border-bottom:none;}
+.rrow .rl{flex:1;font-size:11px;color:var(--sub);}
+.rrow .rv{font-size:12px;font-weight:500;font-family:'SF Mono',ui-monospace,monospace;color:var(--text);}
+.rrow .ru{font-size:10px;color:var(--sub);width:44px;text-align:right;}
+
+/* ── Warning banner ── */
+#vwarn{display:none;background:color-mix(in srgb,#ff3b30 8%,transparent);
+       border:1px solid color-mix(in srgb,#ff3b30 30%,transparent);
+       border-radius:8px;padding:8px 12px;margin:8px 10px 0;
+       color:#ff3b30;font-size:11px;display:flex;gap:7px;align-items:flex-start;}
+#vwarn.hide{display:none!important;}
+
+/* ── Tabs ── */
+#tabbar{display:flex;gap:2px;padding:7px 8px;background:var(--bg);}
+.tb{flex:1;padding:5px 6px;border:none;border-radius:8px;cursor:pointer;
+    background:transparent;color:var(--sub);font-size:11px;font-weight:500;
+    display:flex;align-items:center;justify-content:center;gap:4px;}
+.tb.on{background:var(--surf);color:var(--accent);box-shadow:var(--shadow);}
+
+/* ── Buttons ── */
+.btn-pri{background:var(--accent);color:#fff;border:none;border-radius:8px;
+         padding:5px 13px;font-size:12px;font-weight:500;cursor:pointer;}
+.btn-pri:hover{filter:brightness(1.1);}
+.btn-sec{background:var(--surf2);color:var(--text);border:1px solid var(--border);
+         border-radius:8px;padding:4px 11px;font-size:12px;cursor:pointer;}
+
+/* ── Eval cards ── */
+.ec{background:var(--surf);border:1px solid var(--border);border-radius:var(--rad);
+    padding:10px 12px;margin:0 10px 8px;cursor:pointer;}
+.ec:hover{border-color:var(--accent);}
+.ec h3{font-size:13px;font-weight:600;}
+.ec p{font-size:11px;color:var(--sub);}
+.empty{text-align:center;padding:40px 20px;color:var(--sub);font-size:12px;}
+
+@media print{
+  #app{display:block;height:auto;}
+  #left,#right,header,#tabbar{display:none;}
+  #center{display:block;overflow:visible;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+  <div><h1>AOI 光學架構評估計算器</h1><p>Automated Optical Inspection — System Design Tool</p></div>
+  <div style="margin-left:auto;display:flex;gap:8px;">
+    <button class="btn-sec" onclick="exportPDF()">📄 匯出 PDF</button>
+    <button class="btn-pri" onclick="saveEval()">💾 儲存評估</button>
+  </div>
+</header>
+
+<!-- ═══════════════════ LEFT: Parameters ═══════════════════ -->
+<div class="panel" id="left">
+  <!-- Eval name -->
+  <div style="padding:8px 10px 0">
+    <div class="card" style="margin-bottom:0">
+      <div class="row">
+        <label>評估名稱</label>
+        <input type="text" id="eval-name" value="新評估">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Camera ── -->
+  <div class="shdr">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>相機設定
+  </div>
+  <div class="card">
+    <div class="dbrow">
+      <label>資料庫</label>
+      <select id="cam-pick" onchange="applyCamera()">
+        <option value="">— 手動輸入 —</option>
+      </select>
+    </div>
+    <!-- Camera type: segmented -->
+    <div class="row">
+      <label>相機類型</label>
+      <span class="help" title="面陣飛拍：一次拍一張完整影像。&#10;線掃描：逐行掃描，需穩定速度，行率高。">?</span>
+      <div class="seg" id="cam-type-seg">
+        <button class="on" onclick="setCamType(false)">面陣飛拍</button>
+        <button onclick="setCamType(true)">線掃描</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>彩色感測器</label>
+      <span class="help" title="彩色：每像素 R/G/B 三通道，數據量 3×。灰階：單通道。">?</span>
+      <div class="seg" id="color-seg">
+        <button class="on" onclick="setColor(false)">灰階</button>
+        <button onclick="setColor(true)">彩色</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>2×2 Binning</label>
+      <span class="help" title="2×2 合併像素：有效像素大小×2，解析度↓靈敏度↑">?</span>
+      <div class="seg" id="bin-seg">
+        <button class="on" onclick="setBin(false)">關閉</button>
+        <button onclick="setBin(true)">開啟</button>
+      </div>
+    </div>
+    <div class="row"><label>像素大小</label><span class="help" title="感光元件每像素物理大小，常見 2.5–5.5 µm">?</span><input type="number" id="p-px" value="2.5" step="0.01" oninput="calc()"><span class="unit">µm</span></div>
+    <div class="row"><label>解析度 寬</label><input type="number" id="p-rw" value="5120" step="1" oninput="calc()"><span class="unit">px</span></div>
+    <div class="row" id="row-rh"><label>解析度 高</label><input type="number" id="p-rh" value="5120" step="1" oninput="calc()"><span class="unit">px</span></div>
+    <div class="row"><label id="lbl-fps">幀率</label><input type="number" id="p-fps" value="125" step="1" oninput="calc()"><span class="unit" id="unit-fps">fps</span></div>
+    <div class="row"><label>位元深度</label><input type="number" id="p-bit" value="8" step="1" oninput="calc()"><span class="unit">bit</span></div>
+  </div>
+
+  <!-- ── Lens ── -->
+  <div class="shdr">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+    </svg>鏡頭設定
+  </div>
+  <div class="card">
+    <div class="dbrow">
+      <label>資料庫</label>
+      <select id="lens-pick" onchange="applyLens()">
+        <option value="">— 手動輸入 —</option>
+      </select>
+    </div>
+    <!-- Lens type: segmented -->
+    <div class="row">
+      <label>鏡頭類型</label>
+      <span class="help" title="物鏡：以 NA 描述解析度，精密光學。&#10;CCTV：以焦距和 F# 描述，適合低倍率。">?</span>
+      <div class="seg" id="lens-type-seg">
+        <button class="on" onclick="setLensType(true)">物鏡</button>
+        <button onclick="setLensType(false)">CCTV</button>
+      </div>
+    </div>
+    <div class="row"><label>放大倍率</label><span class="help" title="系統解析度 = 像素大小 / 倍率。倍率↑→視野↓解析度↑">?</span><input type="number" id="p-mag" value="5" step="0.1" oninput="calc()"><span class="unit">×</span></div>
+    <div class="row"><label>像圈直徑</label><span class="help" title="需大於感測器對角線，否則產生暗角（Vignetting）">?</span><input type="number" id="p-ic" value="25" step="0.5" oninput="calc()"><span class="unit">mm</span></div>
+    <div class="row"><label>工作距離</label><input type="number" id="p-wd" value="34" step="1" oninput="calc()"><span class="unit">mm</span></div>
+    <div class="row" id="row-na"><label>NA (數值孔徑)</label><span class="help" title="NA↑→解析度↑景深↓。5×≈0.14，10×≈0.28，20×≈0.42">?</span><input type="number" id="p-na" value="0.14" step="0.001" oninput="calc()"></div>
+    <div class="row" id="row-fn" style="display:none"><label>F# (光圈)</label><input type="number" id="p-fn" value="2.8" step="0.1" oninput="calc()"></div>
+    <div class="row" id="row-fl" style="display:none"><label>焦距</label><input type="number" id="p-fl" value="50" step="1" oninput="calc()"><span class="unit">mm</span></div>
+    <div class="row"><label>光源波長</label><span class="help" title="影響瑞利解析度計算。白光≈550nm，藍光≈450nm">?</span><input type="number" id="p-wl" value="550" step="10" oninput="calc()"><span class="unit">nm</span></div>
+  </div>
+
+  <!-- ── Scan ── -->
+  <div class="shdr">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+      <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+    </svg>掃描設定
+  </div>
+  <div class="card">
+    <div class="row"><label>樣品寬度</label><input type="number" id="p-sw" value="920" step="1" oninput="calc()"><span class="unit">mm</span></div>
+    <div class="row"><label>樣品高度</label><input type="number" id="p-sh" value="730" step="1" oninput="calc()"><span class="unit">mm</span></div>
+    <div class="row">
+      <label>掃描方向</label>
+      <span class="help" title="台車掃描的軸向。建議沿行程較長的邊移動。">?</span>
+      <div class="seg" id="scan-dir-seg">
+        <button class="on" onclick="setScanDir(true)">沿寬度</button>
+        <button onclick="setScanDir(false)">沿高度</button>
+      </div>
+    </div>
+    <div class="row"><label>每排相機數量</label><span class="help" title="並排相機同時覆蓋換道寬度，減少掃描道數">?</span><input type="number" id="p-nc" value="5" step="1" oninput="calc()"></div>
+    <div class="row"><label>相機排數</label><input type="number" id="p-nr" value="1" step="1" oninput="calc()"></div>
+    <div class="row"><label>影像重疊率</label><span class="help" title="相鄰影像重疊百分比。常用 6.25%（=1/16）確保無漏掃">?</span><input type="number" id="p-ov" value="6.25" step="0.01" oninput="calc()"><span class="unit">%</span></div>
+    <div class="row"><label>加速度</label><input type="number" id="p-ac" value="550" step="10" oninput="calc()"><span class="unit">mm/s²</span></div>
+    <div class="row"><label>換道時間</label><input type="number" id="p-ct" value="0.12" step="0.01" oninput="calc()"><span class="unit">s</span></div>
+    <div class="row"><label>返回速度</label><input type="number" id="p-bs" value="300" step="10" oninput="calc()"><span class="unit">mm/s</span></div>
+    <div class="row"><label>Encoder 解析度</label><input type="number" id="p-ep" value="0.05" step="0.001" oninput="calc()"><span class="unit">µm</span></div>
+  </div>
+  <div style="height:14px"></div>
+</div>
+
+<!-- ═══════════════════ CENTER: Diagram + Metrics ═══════════════════ -->
+<div class="panel" id="center">
+  <div id="vwarn" class="hide">⚠️ <span id="vwarn-msg"></span></div>
+  <div id="dg-wrap"><canvas id="dg" height="290"></canvas></div>
+  <div id="metrics">
+    <div class="metric"><div class="mi">⏱</div><div class="mt">來回掃描 TT</div><div class="mv" id="m-tt">—</div><div class="mu">分鐘</div></div>
+    <div class="metric"><div class="mi">→</div><div class="mt">掃描速度</div><div class="mv" id="m-spd">—</div><div class="mu">mm/s</div></div>
+    <div class="metric"><div class="mi">🔍</div><div class="mt">系統解析度</div><div class="mv" id="m-res">—</div><div class="mu">µm/px</div></div>
+    <div class="metric"><div class="mi">📷</div><div class="mt">單道拍攝</div><div class="mv" id="m-cap">—</div><div class="mu">張/道</div></div>
+    <div class="metric"><div class="mi">↕</div><div class="mt">掃描道數</div><div class="mv" id="m-pas">—</div><div class="mu">道</div></div>
+    <div class="metric"><div class="mi">⚡</div><div class="mt">數據流量</div><div class="mv" id="m-df">—</div><div class="mu">GB/s</div></div>
+  </div>
+  <div style="padding:0 10px 12px">
+    <div class="shdr" style="padding-left:2px">📝 備註</div>
+    <textarea id="eval-notes" placeholder="輸入備註..."
+      style="width:100%;height:56px;padding:7px;font-size:12px;border:1px solid var(--border);
+             border-radius:var(--rad);background:var(--surf);color:var(--text);resize:none;outline:none;"></textarea>
+  </div>
+</div>
+
+<!-- ═══════════════════ RIGHT: Results / Reports ═══════════════════ -->
+<div class="panel" id="right">
+  <div id="tabbar">
+    <button class="tb on" onclick="showTab('res')" id="tab-res">📊 詳細結果</button>
+    <button class="tb" onclick="showTab('rep')" id="tab-rep">📁 報告</button>
+  </div>
+
+  <!-- Results pane -->
+  <div id="pane-res">
+    <div class="shdr" style="padding-top:6px">🔭 光學規格</div>
+    <div class="card">
+      <div class="rrow"><span class="rl">系統解析度</span><span class="rv" id="r-or">—</span><span class="ru">µm/px</span></div>
+      <div class="rrow"><span class="rl">感測器對角線</span><span class="rv" id="r-dg">—</span><span class="ru">mm</span></div>
+      <div class="rrow"><span class="rl">水平 FOV / 台</span><span class="rv" id="r-hf">—</span><span class="ru">mm</span></div>
+      <div class="rrow"><span class="rl">垂直 FOV</span><span class="rv" id="r-vf">—</span><span class="ru">mm</span></div>
+      <div class="rrow"><span class="rl">鏡頭解析度</span><span class="rv" id="r-lr">—</span><span class="ru">µm</span></div>
+      <div class="rrow"><span class="rl">最小檢測解析度</span><span class="rv" id="r-mr">—</span><span class="ru">µm</span></div>
+      <div class="rrow"><span class="rl">景深 DoF</span><span class="rv" id="r-df">—</span><span class="ru">µm</span></div>
+    </div>
+    <div class="shdr">📐 掃描規格</div>
+    <div class="card">
+      <div class="rrow"><span class="rl">光學總數量</span><span class="rv" id="r-qty">—</span><span class="ru">台</span></div>
+      <div class="rrow"><span class="rl">掃描行程</span><span class="rv" id="r-se">—</span><span class="ru">mm</span></div>
+      <div class="rrow"><span class="rl">換道行程</span><span class="rv" id="r-sh">—</span><span class="ru">mm</span></div>
+      <div class="rrow"><span class="rl">掃描速度</span><span class="rv" id="r-sp">—</span><span class="ru">mm/s</span></div>
+      <div class="rrow"><span class="rl">單道拍攝張數</span><span class="rv" id="r-cp">—</span><span class="ru">張</span></div>
+      <div class="rrow"><span class="rl">掃描道數</span><span class="rv" id="r-ps">—</span><span class="ru">道</span></div>
+    </div>
+    <div class="shdr">⏰ 時序分析</div>
+    <div class="card">
+      <div class="rrow"><span class="rl">加減速時間</span><span class="rv" id="r-at">—</span><span class="ru">s/道</span></div>
+      <div class="rrow"><span class="rl">等速掃描時間</span><span class="rv" id="r-cs">—</span><span class="ru">s/道</span></div>
+      <div class="rrow"><span class="rl">單趟返回時間</span><span class="rv" id="r-rt">—</span><span class="ru">s/道</span></div>
+      <div class="rrow"><span class="rl">換道時間</span><span class="rv" id="r-ct">—</span><span class="ru">s</span></div>
+      <div class="rrow"><span class="rl">單向掃描 TT</span><span class="rv" id="r-st">—</span><span class="ru">min</span></div>
+      <div class="rrow"><span class="rl">來回掃描 TT</span><span class="rv" id="r-tt">—</span><span class="ru">min</span></div>
+    </div>
+    <div class="shdr">💻 硬體需求</div>
+    <div class="card">
+      <div class="rrow"><span class="rl">不模糊曝光上限</span><span class="rv" id="r-ex">—</span><span class="ru">µs</span></div>
+      <div class="rrow"><span class="rl">Encoder 頻率</span><span class="rv" id="r-ef">—</span><span class="ru">MHz</span></div>
+      <div class="rrow"><span class="rl">最小脈衝寬度</span><span class="rv" id="r-pw">—</span><span class="ru">ns</span></div>
+      <div class="rrow"><span class="rl">資料流量</span><span class="rv" id="r-dfl">—</span><span class="ru">GB/s</span></div>
+    </div>
+    <div style="height:14px"></div>
+  </div>
+
+  <!-- Reports pane -->
+  <div id="pane-rep" style="display:none">
+    <div style="padding:7px 10px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:12px;color:var(--sub)" id="ev-cnt">0 筆評估</span>
+      <button class="btn-sec" onclick="clearEvals()" style="margin-left:auto;font-size:11px">清除全部</button>
+    </div>
+    <div id="ev-list"></div>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<script>
+// ═══════════════════════════════════════════
+// DATABASE
+// ═══════════════════════════════════════════
+const CAMS = [
+  {n:"Basler ace2 a2A5120 (25MP)", px:2.5,  rw:5120,rh:5120,fps:125,  bit:8,color:false,line:false},
+  {n:"Basler ace2 a2A3840 (8.3MP)",px:2.74, rw:3840,rh:2160,fps:20,   bit:8,color:false,line:false},
+  {n:"FLIR BFS-U3-200S6M (20MP)",  px:2.4,  rw:5472,rh:3648,fps:17,   bit:8,color:false,line:false},
+  {n:"FLIR BFS-U3-51S5M (5MP)",    px:3.45, rw:2448,rh:2048,fps:75,   bit:8,color:false,line:false},
+  {n:"Hikrobot MV-CA250-10GM",     px:2.5,  rw:5120,rh:5120,fps:10,   bit:8,color:false,line:false},
+  {n:"Hikrobot MV-CA050-10GM",     px:2.2,  rw:2592,rh:1944,fps:10,   bit:8,color:false,line:false},
+  {n:"Teledyne Linea 4K (Line)",   px:7.0,  rw:4096,rh:1,   fps:53000,bit:8,color:false,line:true},
+  {n:"Teledyne Linea 8K (Line)",   px:5.0,  rw:8192,rh:1,   fps:40000,bit:8,color:false,line:true},
+];
+const LENS = [
+  {n:"Mitutoyo M Plan Apo 2×",  mag:2,  ic:25,wd:34, na:0.055,obj:true, fn:2.8,fl:100},
+  {n:"Mitutoyo M Plan Apo 5×",  mag:5,  ic:25,wd:34, na:0.14, obj:true, fn:2.8,fl:40},
+  {n:"Mitutoyo M Plan Apo 10×", mag:10, ic:25,wd:34, na:0.28, obj:true, fn:2.8,fl:20},
+  {n:"Mitutoyo M Plan Apo 20×", mag:20, ic:25,wd:20, na:0.42, obj:true, fn:2.8,fl:10},
+  {n:"Mitutoyo M Plan Apo 50×", mag:50, ic:25,wd:13, na:0.55, obj:true, fn:2.8,fl:4},
+  {n:"Computar M5018-MP2 50mm", mag:1,  ic:16,wd:500,na:0,    obj:false,fn:1.8,fl:50},
+  {n:"Computar M3518-MP2 35mm", mag:1,  ic:16,wd:300,na:0,    obj:false,fn:1.8,fl:35},
+  {n:"Computar M2518-MP2 25mm", mag:1,  ic:16,wd:200,na:0,    obj:false,fn:1.8,fl:25},
+  {n:"Navitar NMV-50M1 50mm",   mag:1,  ic:16,wd:400,na:0,    obj:false,fn:2.8,fl:50},
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let S = {lineScan:false, color:false, binning:false, objective:true,
+         scanAlongWidth:true};
+let evals = JSON.parse(localStorage.getItem('aoi_evals')||'[]');
+let lastR = {}, lastP = {};
+
+// ═══════════════════════════════════════════
+// SEGMENTED CONTROLS
+// ═══════════════════════════════════════════
+function segSet(id, idx){
+  const btns = document.getElementById(id).querySelectorAll('button');
+  btns.forEach((b,i)=>b.classList.toggle('on', i===idx));
+}
+function setCamType(line){ S.lineScan=line; segSet('cam-type-seg',line?1:0);
+  document.getElementById('row-rh').style.display=line?'none':'';
+  document.getElementById('lbl-fps').textContent=line?'線率':'幀率';
+  document.getElementById('unit-fps').textContent=line?'Hz':'fps';
+  calc(); }
+function setColor(c){ S.color=c; segSet('color-seg',c?1:0); calc(); }
+function setBin(b){ S.binning=b; segSet('bin-seg',b?1:0); calc(); }
+function setLensType(obj){ S.objective=obj; segSet('lens-type-seg',obj?0:1);
+  document.getElementById('row-na').style.display=obj?'':'none';
+  document.getElementById('row-fn').style.display=obj?'none':'';
+  document.getElementById('row-fl').style.display=obj?'none':'';
+  calc(); }
+function setScanDir(w){ S.scanAlongWidth=w; segSet('scan-dir-seg',w?0:1); calc(); }
+
+// ═══════════════════════════════════════════
+// READ PARAMS
+// ═══════════════════════════════════════════
+function P(){
+  return {
+    pixelSize:+v('p-px'), rW:+v('p-rw'), rH:+v('p-rh'),
+    fps:+v('p-fps'), bit:+v('p-bit'),
+    lineScan:S.lineScan, color:S.color, binning:S.binning,
+    mag:+v('p-mag'), imageCircle:+v('p-ic'), wd:+v('p-wd'),
+    na:+v('p-na'), fn:+v('p-fn'), fl:+v('p-fl'),
+    objective:S.objective, wl:+v('p-wl'),
+    sampleW:+v('p-sw'), sampleH:+v('p-sh'),
+    scanAlongWidth:S.scanAlongWidth,
+    nCams:+v('p-nc'), nRows:+v('p-nr'), overlap:+v('p-ov'),
+    acc:+v('p-ac'), changeSlice:+v('p-ct'),
+    backSpeed:+v('p-bs'), encPitch:+v('p-ep'),
+  };
+}
+function v(id){ return document.getElementById(id).value; }
+
+// ═══════════════════════════════════════════
+// CALCULATION ENGINE
+// ═══════════════════════════════════════════
+function calculate(p){
+  const r={};
+  const px = p.binning ? p.pixelSize*2 : p.pixelSize;
+  r.effectivePx = px;
+  r.sensorDiag = Math.sqrt(Math.pow(p.rW*p.pixelSize/1000,2)+Math.pow(p.rH*p.pixelSize/1000,2));
+  r.vignetting = p.imageCircle < r.sensorDiag;
+  r.optRes = px / p.mag;
+  const hPx = p.binning?p.rW/2:p.rW, vPx = p.binning?p.rH/2:p.rH;
+  r.hFOV = r.vignetting ? 0 : r.optRes*hPx/1000;
+  r.vFOV = r.vignetting ? 0 : r.optRes*vPx/1000;
+
+  const scanET  = p.scanAlongWidth ? p.sampleW : p.sampleH;
+  const shiftET = p.scanAlongWidth ? p.sampleH : p.sampleW;
+  r.scanEdge  = scanET / p.nRows;
+  r.shiftEdge = shiftET;
+  r.rowPitch  = shiftET / p.nCams;
+  r.totalOpt  = p.nCams * p.nRows;
+
+  r.fovShift  = r.hFOV;
+  r.stepShift = r.hFOV * p.nCams * (1-p.overlap/100);
+  r.totalFOV  = r.hFOV * p.nCams;
+
+  r.capturesPerPass = p.lineScan
+    ? (r.optRes>0 ? r.scanEdge/(r.optRes/1000) : 0)
+    : (r.vFOV>0 ? Math.ceil((r.scanEdge-r.vFOV)/(r.vFOV*(1-p.overlap/100))) : 0);
+
+  r.passes = (r.totalFOV>0 && r.stepShift>0)
+    ? Math.ceil((r.shiftEdge-r.totalFOV)/r.stepShift)+1 : 0;
+
+  r.speed = p.lineScan
+    ? r.optRes*p.fps*0.85/1000
+    : (p.fps>0&&r.capturesPerPass>0 ? r.scanEdge*p.fps/r.capturesPerPass : 0);
+
+  r.accDecTime = 2*(r.speed/p.acc);
+  r.constTime  = p.lineScan ? (r.speed>0?r.scanEdge/r.speed:0) : r.capturesPerPass/p.fps;
+  r.returnTime = p.backSpeed/p.acc + r.scanEdge/p.backSpeed;
+  r.encFreq    = r.speed/(p.encPitch*1000);
+  r.minPulseNs = r.encFreq>0 ? 1000/r.encFreq : 0;
+  r.nonBlurExp = r.speed>0 ? r.optRes/r.speed*1000 : 0;
+
+  const ch = p.color?3:1;
+  r.dataFlow = p.lineScan
+    ? p.rW*p.fps*ch*p.bit/8/1024/1024/1024
+    : p.rW*p.rH*p.fps*ch*p.bit/8/1024/1024/1024;
+
+  r.lensRes = (p.objective&&p.na>0) ? (1.22*p.wl/(2*p.na))/1000 : 0;
+  r.camResNyq = 2.3*r.optRes;
+  r.minDetRes = Math.max(r.camResNyq, r.lensRes);
+
+  if(p.objective&&p.na>0){
+    r.dof = (p.wl/(p.na*p.na*2))/1000;
+  } else {
+    const delta=Math.max(r.sensorDiag/1730,p.pixelSize/1000);
+    const F=p.fl,u=p.wd,N=p.fn;
+    const d1=F*F+N*delta*u, d2=F*F-N*delta*u;
+    r.dof = (F>0&&d1!==0&&d2!==0) ? ((N*delta*u*u)/d1+(N*delta*u*u)/d2)*1000 : 0;
+  }
+
+  const passes=r.passes;
+  r.singleTT = (r.accDecTime*passes + r.constTime*passes + r.returnTime*Math.max(passes-1,0) + p.changeSlice*Math.max(passes-1,0))/60;
+  r.roundTT  = (r.accDecTime*passes + r.constTime*passes + p.changeSlice*Math.max(passes-1,0))/60;
+  return r;
+}
+
+// ═══════════════════════════════════════════
+// MAIN CALC + UI UPDATE
+// ═══════════════════════════════════════════
+function fmt(v,d=2){ return (!isFinite(v)||v===0)?'—':v.toFixed(d); }
+
+function calc(){
+  const p = P(); lastP=p;
+  const r = calculate(p); lastR=r;
+
+  // Vignette
+  const vw=document.getElementById('vwarn');
+  if(r.vignetting){
+    vw.classList.remove('hide'); vw.style.display='flex';
+    document.getElementById('vwarn-msg').textContent=
+      `暗角警告！像圈 ${p.imageCircle.toFixed(1)} mm < 感測器對角線 ${r.sensorDiag.toFixed(2)} mm`;
+  } else { vw.classList.add('hide'); vw.style.display='none'; }
+
+  // Metrics
+  set('m-tt', fmt(r.roundTT));
+  set('m-spd',fmt(r.speed,1));
+  set('m-res',fmt(r.optRes,3));
+  set('m-cap',fmt(r.capturesPerPass,0));
+  set('m-pas',fmt(r.passes,0));
+  set('m-df', fmt(r.dataFlow,3));
+
+  // Results
+  set('r-or', fmt(r.optRes,3));   set('r-dg', fmt(r.sensorDiag,2));
+  set('r-hf', fmt(r.hFOV,3));     set('r-vf', fmt(r.vFOV,3));
+  set('r-lr', p.objective?fmt(r.lensRes,3):'—'); set('r-mr', fmt(r.minDetRes,3));
+  set('r-df', fmt(r.dof,2));
+  set('r-qty',fmt(r.totalOpt,0)); set('r-se', fmt(r.scanEdge,2));
+  set('r-sh', fmt(r.shiftEdge,2));set('r-sp', fmt(r.speed,3));
+  set('r-cp', fmt(r.capturesPerPass,0)); set('r-ps', fmt(r.passes,0));
+  set('r-at', fmt(r.accDecTime,3));set('r-cs', fmt(r.constTime,3));
+  set('r-rt', fmt(r.returnTime,3));set('r-ct', p.changeSlice.toFixed(3));
+  set('r-st', fmt(r.singleTT,3)); set('r-tt', fmt(r.roundTT,3));
+  set('r-ex', fmt(r.nonBlurExp,2));set('r-ef', fmt(r.encFreq,4));
+  set('r-pw', fmt(r.minPulseNs,1));set('r-dfl',fmt(r.dataFlow,4));
+
+  drawDiagram(p,r);
+}
+function set(id,v){ document.getElementById(id).textContent=v; }
+
+// ═══════════════════════════════════════════
+// SCAN DIAGRAM
+// ═══════════════════════════════════════════
+function drawDiagram(p,r){
+  const canvas=document.getElementById('dg');
+  const wrap=document.getElementById('dg-wrap');
+  const dpr=window.devicePixelRatio||1;
+  const cssW=wrap.clientWidth||600, cssH=290;
+  canvas.style.width=cssW+'px'; canvas.style.height=cssH+'px';
+  canvas.width=cssW*dpr; canvas.height=cssH*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const W=cssW, H=cssH;
+  const dark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=dark?'#1c1c1e':'#f5f5f7';
+  ctx.fillRect(0,0,W,H);
+
+  const PL=46,PR=14,PT=30,PB=58;
+  const dW=W-PL-PR, dH=H-PT-PB;
+  const ox=PL, oy=PT;
+  if(r.shiftEdge<=0||r.scanEdge<=0) return;
+
+  const nCams=Math.max(1,Math.round(p.nCams));
+  const passes=Math.max(1,Math.round(r.passes));
+  const ovFrac=p.overlap/100;
+
+  // ── Schematic camera width ──
+  const trueSx=dW/r.shiftEdge;
+  const trueCamW=r.fovShift*trueSx;
+  const minCamPx=22, maxCamPx=Math.max(minCamPx,dW*0.6/nCams);
+  const camW=Math.min(Math.max(trueCamW,minCamPx),maxCamPx);
+  const gapW=Math.max(camW*0.18,3);
+  const camAW=camW-gapW;
+  const stepPx=camW*nCams*(1-ovFrac);
+  const fitP=stepPx>0?Math.floor((dW-camAW)/stepPx)+1:1;
+  const visP=Math.min(passes,Math.max(1,fitP),12);
+
+  // ── Y schematic frames ──
+  const nSl=7;
+  const fH=Math.max(dH/(nSl+1),10);
+  const sfY=fH*(1-ovFrac);
+  const ovH=fH*ovFrac;
+
+  // Palette
+  const pal=['#007aff','#32ade6','#30b0c7','#5856d6','#af52de','#ff9500','#34c759','#ff2d55'];
+
+  // Sample bg
+  ctx.fillStyle=dark?'#2c2c2e':'#f0f0f3';
+  ctx.fillRect(ox,oy,dW,dH);
+  ctx.strokeStyle=dark?'#636366':'#8e8e93';
+  ctx.lineWidth=1.5; ctx.strokeRect(ox,oy,dW,dH);
+
+  // Draw passes
+  for(let pi=0;pi<visP;pi++){
+    const passX=ox+pi*stepPx;
+    if(passX>=ox+dW) break;
+    const isF=pi===0, dim=isF?1:0.42;
+    for(let ci=0;ci<nCams;ci++){
+      const cX=passX+ci*camW+gapW*0.5;
+      if(cX>=ox+dW) break;
+      const cW2=Math.min(camAW,ox+dW-cX);
+      if(cW2<=0) break;
+      const hex=pal[(pi*nCams+ci)%pal.length];
+
+      // Base fill
+      ctx.fillStyle=ha(hex,0.06*dim);
+      ctx.fillRect(cX,oy,cW2,dH);
+
+      // Gradient frame bands
+      for(let si=0;si<nSl*2;si++){
+        const fy=oy+si*sfY;
+        if(fy>=oy+dH) break;
+        const fh=Math.min(fH,oy+dH-fy);
+        if(fh<=0) break;
+        const g=ctx.createLinearGradient(cX,fy,cX,fy+fh);
+        g.addColorStop(0,ha(hex,0.04*dim));
+        g.addColorStop(0.82,ha(hex,0.25*dim));
+        g.addColorStop(1,ha(hex,0.18*dim));
+        ctx.fillStyle=g; ctx.fillRect(cX,fy,cW2,fh);
+        // Overlap zone
+        if(si>0&&ovH>0){
+          ctx.fillStyle=ha(hex,0.20*dim);
+          ctx.fillRect(cX,fy,cW2,Math.min(ovH,fh));
+        }
+      }
+
+      // Header bar (first pass)
+      if(isF){
+        const hH=Math.min(fH*0.65,18);
+        ctx.fillStyle=ha(hex,0.72); ctx.fillRect(cX,oy,cW2,hH);
+        ctx.strokeStyle=ha(hex,0.32); ctx.lineWidth=0.8;
+        ctx.strokeRect(cX,oy,cW2,dH);
+        // Label
+        if(cW2>8){
+          ctx.fillStyle='rgba(255,255,255,0.9)';
+          ctx.font=`bold ${Math.min(9,cW2*0.8)}px -apple-system,sans-serif`;
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('C'+(ci+1), cX+cW2/2, oy+Math.min(hH/2,9));
+        }
+      }
+    }
+  }
+
+  // ── Dimension bracket: per-camera FOV ──
+  const db1x1=ox+gapW*0.5, db1x2=db1x1+camAW, db1y=oy+dH+8;
+  bracket(ctx,db1x1,db1x2,db1y,dark);
+  ctx.fillStyle=dark?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)';
+  ctx.font='8px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText(`${r.fovShift.toFixed(2)} mm/台`,(db1x1+db1x2)/2,db1y+6);
+
+  // ── Dimension bracket: step per pass ──
+  if(visP>1&&stepPx>24){
+    const db2y=oy+dH+28;
+    bracket(ctx,ox,ox+stepPx,db2y,dark);
+    ctx.fillStyle=dark?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)';
+    ctx.font='8px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(`${r.stepShift.toFixed(1)} mm/道`,(ox+ox+stepPx)/2,db2y+6);
+  }
+
+  // ── Inset true-scale overview ──
+  const iW=Math.min(90,dW*0.22), iH=Math.min(80,dH*0.36);
+  const iX=ox+dW-iW, iY=oy+dH-iH;
+  ctx.fillStyle=dark?'rgba(44,44,46,0.95)':'rgba(255,255,255,0.95)';
+  ctx.fillRect(iX,iY,iW,iH);
+  ctx.strokeStyle='rgba(0,122,255,0.45)'; ctx.lineWidth=1;
+  ctx.strokeRect(iX,iY,iW,iH);
+
+  const tsx=iW/r.shiftEdge;
+  const tCam=r.fovShift*tsx*nCams;
+  const tStp=Math.max(r.stepShift*tsx,0.3);
+  for(let pi=0;pi<Math.min(passes,200);pi++){
+    const tx=iX+pi*tStp;
+    if(tx>=iX+iW) break;
+    const tw=Math.min(tCam,iX+iW-tx);
+    ctx.fillStyle=ha(pal[(pi*nCams)%pal.length],pi===0?0.55:0.20);
+    ctx.fillRect(tx,iY,Math.max(tw,0.3),iH);
+  }
+  const hlW=Math.min(visP*tStp,iW);
+  ctx.strokeStyle='rgba(0,122,255,0.9)'; ctx.lineWidth=1.5;
+  ctx.strokeRect(iX,iY,hlW,iH);
+
+  // ── Text labels ──
+  const tc=dark?'#f5f5f7':'#1d1d1f';
+  const sc=dark?'rgba(255,255,255,0.45)':'rgba(0,0,0,0.4)';
+  ctx.textBaseline='middle';
+
+  // Title
+  ctx.fillStyle=tc; ctx.font='600 11px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('掃描示意圖 (示意非等比)', ox+dW/2, 16);
+
+  // X axis label
+  ctx.fillStyle=sc; ctx.font='10px -apple-system,sans-serif';
+  ctx.fillText(`換道方向  ${r.shiftEdge.toFixed(0)} mm  (${passes} 道)`, ox+dW/2, oy+dH+48);
+
+  // Y axis label
+  ctx.save(); ctx.translate(12,oy+dH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText(`掃描方向  ${r.scanEdge.toFixed(0)} mm`, 0, 0); ctx.restore();
+
+  // Inset label
+  ctx.fillStyle='rgba(0,122,255,0.85)'; ctx.font='600 8px -apple-system,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('全局俯視', iX+iW/2, iY+7);
+  ctx.fillStyle=sc; ctx.font='7px -apple-system,sans-serif';
+  ctx.fillText(`${r.shiftEdge.toFixed(0)}×${r.scanEdge.toFixed(0)} mm`, iX+iW/2, iY+iH-7);
+}
+
+function bracket(ctx,x1,x2,y,dark){
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.35)':'rgba(0,0,0,0.3)';
+  ctx.lineWidth=0.9; ctx.beginPath();
+  ctx.moveTo(x1,y); ctx.lineTo(x1,y+5);
+  ctx.moveTo(x2,y); ctx.lineTo(x2,y+5);
+  ctx.moveTo(x1,y+2.5); ctx.lineTo(x2,y+2.5);
+  ctx.stroke();
+}
+function ha(hex,a){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a.toFixed(3)})`;
+}
+
+// ═══════════════════════════════════════════
+// DB PICKERS
+// ═══════════════════════════════════════════
+function initPickers(){
+  const cp=document.getElementById('cam-pick');
+  CAMS.forEach((c,i)=>cp.appendChild(new Option(c.n,i)));
+  const lp=document.getElementById('lens-pick');
+  LENS.forEach((l,i)=>lp.appendChild(new Option(l.n,i)));
+}
+function applyCamera(){
+  const i=document.getElementById('cam-pick').value; if(i==='')return;
+  const c=CAMS[+i];
+  sv('p-px',c.px); sv('p-rw',c.rw); sv('p-rh',c.rh);
+  sv('p-fps',c.fps); sv('p-bit',c.bit);
+  setColor(c.color||false); setCamType(c.line||false); calc();
+}
+function applyLens(){
+  const i=document.getElementById('lens-pick').value; if(i==='')return;
+  const l=LENS[+i];
+  sv('p-mag',l.mag); sv('p-ic',l.ic); sv('p-wd',l.wd);
+  sv('p-na',l.na); sv('p-fn',l.fn); sv('p-fl',l.fl);
+  setLensType(l.obj); calc();
+}
+function sv(id,val){ document.getElementById(id).value=val; }
+
+// ═══════════════════════════════════════════
+// EVALUATIONS
+// ═══════════════════════════════════════════
+function saveEval(){
+  const p=P(), r=calculate(p);
+  const ci=document.getElementById('cam-pick').value;
+  const li=document.getElementById('lens-pick').value;
+  evals.unshift({
+    id:Date.now(),
+    name:document.getElementById('eval-name').value||'新評估',
+    date:new Date().toLocaleString('zh-TW'),
+    camera:ci!==''?CAMS[+ci].n:'手動輸入',
+    lens:li!==''?LENS[+li].n:'手動輸入',
+    notes:document.getElementById('eval-notes').value,
+    p, r
+  });
+  localStorage.setItem('aoi_evals',JSON.stringify(evals));
+  renderEvals(); showTab('rep');
+}
+function clearEvals(){
+  if(!confirm('確定清除所有評估記錄？'))return;
+  evals=[]; localStorage.removeItem('aoi_evals'); renderEvals();
+}
+function renderEvals(){
+  const el=document.getElementById('ev-list');
+  document.getElementById('ev-cnt').textContent=`${evals.length} 筆評估`;
+  if(!evals.length){
+    el.innerHTML='<div class="empty">📄<br>尚無儲存的評估<br><small>在計算器完成後按「儲存評估」</small></div>';
+    return;
+  }
+  el.innerHTML=evals.map((e,i)=>`
+    <div class="ec">
+      <h3>${e.name}</h3>
+      <p>${e.date} · ${e.camera}</p>
+      <p>TT: ${fmt(e.r.roundTT)} min · ${fmt(e.r.passes,0)} 道 · ${fmt(e.r.optRes,3)} µm/px</p>
+      <div style="margin-top:6px;display:flex;gap:6px">
+        <button class="btn-sec" style="font-size:11px" onclick="loadEval(${i})">📂 載入</button>
+        <button class="btn-sec" style="font-size:11px" onclick="exportEval(${i})">📄 PDF</button>
+        <button class="btn-sec" style="font-size:11px;color:#ff3b30" onclick="delEval(${i})">🗑 刪除</button>
+      </div>
+    </div>`).join('');
+}
+function loadEval(i){
+  const e=evals[i], p=e.p;
+  sv('p-px',p.pixelSize); sv('p-rw',p.rW); sv('p-rh',p.rH);
+  sv('p-fps',p.fps); sv('p-bit',p.bit);
+  sv('p-mag',p.mag); sv('p-ic',p.imageCircle); sv('p-wd',p.wd);
+  sv('p-na',p.na); sv('p-fn',p.fn); sv('p-fl',p.fl); sv('p-wl',p.wl);
+  sv('p-sw',p.sampleW); sv('p-sh',p.sampleH);
+  sv('p-nc',p.nCams); sv('p-nr',p.nRows); sv('p-ov',p.overlap);
+  sv('p-ac',p.acc); sv('p-ct',p.changeSlice); sv('p-bs',p.backSpeed); sv('p-ep',p.encPitch);
+  document.getElementById('eval-name').value=e.name;
+  document.getElementById('eval-notes').value=e.notes;
+  setCamType(p.lineScan); setColor(p.color); setBin(p.binning);
+  setLensType(p.objective); setScanDir(p.scanAlongWidth);
+  calc(); showTab('res');
+}
+function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.stringify(evals)); renderEvals(); }
+function exportEval(i){ loadEval(i); setTimeout(()=>window.print(),300); }
+function exportPDF(){ window.print(); }
+
+// ═══════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════
+function showTab(t){
+  document.getElementById('pane-res').style.display=t==='res'?'':'none';
+  document.getElementById('pane-rep').style.display=t==='rep'?'':'none';
+  document.getElementById('tab-res').classList.toggle('on',t==='res');
+  document.getElementById('tab-rep').classList.toggle('on',t==='rep');
+  if(t==='rep') renderEvals();
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+initPickers();
+calc();
+window.addEventListener('resize',()=>drawDiagram(lastP,lastR));
+</script>
+</body>
+</html>
