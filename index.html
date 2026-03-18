@@ -72,21 +72,20 @@ header p{font-size:10px;color:var(--sub);}
 .hw-icon{font-size:12px;width:16px;text-align:center;}
 .hw-lbl{color:var(--sub);min-width:26px;font-size:10px;}
 .hw-val{color:var(--text);font-weight:500;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
-/* ── Key metrics (summary row) ── */
-#key-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 10px 4px;}
-#key-metrics .metric .mv{color:var(--accent);}
-#key-metrics .metric .mi{color:var(--accent);}
+/* ── 2-column result section grid ── */
+.res-grid{padding:2px 10px 10px;display:grid;grid-template-columns:1fr 1fr;gap:0 8px;align-items:start;}
+.rg-sec{min-width:0;}
+.rg-sec .shdr{padding:8px 2px 4px;}
 
-/* ── Card grid for detail sections ── */
-.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 10px;}
+/* ── Card grid within each section ── */
+.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
 .cg2{grid-template-columns:repeat(2,1fr);}
 
-/* ── Metric cards (big) ── */
-.metric{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:10px 10px 8px;}
-.metric .mi{font-size:13px;margin-bottom:3px;}
-.metric .mt{font-size:10px;color:var(--sub);line-height:1.3;margin-bottom:4px;}
-.metric .mv{font-size:20px;font-weight:700;color:var(--text);line-height:1;font-variant-numeric:tabular-nums;}
-.metric .mu{font-size:10px;color:var(--sub);margin-top:2px;}
+/* ── Metric cards ── */
+.metric{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:7px 8px 6px;}
+.metric .mt{font-size:10px;color:var(--sub);line-height:1.3;margin-bottom:3px;}
+.metric .mv{font-size:15px;font-weight:700;color:var(--text);line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.metric .mu{font-size:10px;color:var(--sub);font-weight:400;}
 
 /* ── Warning banner ── */
 #vwarn{display:none;background:color-mix(in srgb,#ff3b30 8%,transparent);
@@ -286,66 +285,65 @@ header p{font-size:10px;color:var(--sub);}
 
   <!-- Results pane -->
   <div id="pane-res">
-    <!-- Warning banner (moved from center panel) -->
     <div id="vwarn" class="hide">⚠️ <span id="vwarn-msg"></span></div>
-    <!-- Hardware config -->
     <div id="hw-head">
       <div class="hw-row"><span class="hw-icon">📷</span><span class="hw-lbl">相機</span><span class="hw-val" id="hw-cam">手動輸入</span></div>
       <div class="hw-row"><span class="hw-icon">🔭</span><span class="hw-lbl">鏡頭</span><span class="hw-val" id="hw-lens">手動輸入</span></div>
     </div>
-    <!-- Key metrics -->
-    <div id="key-metrics">
-      <div class="metric"><div class="mi">⏱</div><div class="mt">來回掃描 TT</div><div class="mv" id="m-tt">—</div><div class="mu">min</div></div>
-      <div class="metric"><div class="mi">🔍</div><div class="mt">系統解析度</div><div class="mv" id="m-res">—</div><div class="mu">µm/px</div></div>
-      <div class="metric"><div class="mi">→</div><div class="mt">掃描速度</div><div class="mv" id="m-spd">—</div><div class="mu">mm/s</div></div>
-      <div class="metric"><div class="mi">📷</div><div class="mt">單道拍攝</div><div class="mv" id="m-cap">—</div><div class="mu">張/道</div></div>
-      <div class="metric"><div class="mi">↕</div><div class="mt">掃描道數</div><div class="mv" id="m-pas">—</div><div class="mu">道</div></div>
-      <div class="metric"><div class="mi">⚡</div><div class="mt">數據流量</div><div class="mv" id="m-df">—</div><div class="mu">GB/s</div></div>
-    </div>
-    <div class="shdr" style="padding-top:4px">🔭 光學規格</div>
-    <div class="card">
-      <div class="cg">
-        <div class="metric"><div class="mi">🔍</div><div class="mt">系統解析度</div><div class="mv" id="r-or">—</div><div class="mu">µm/px</div></div>
-        <div class="metric"><div class="mi">📐</div><div class="mt">感測器對角線</div><div class="mv" id="r-dg">—</div><div class="mu">mm</div></div>
-        <div class="metric"><div class="mi">↔</div><div class="mt">水平 FOV / 台</div><div class="mv" id="r-hf">—</div><div class="mu">mm</div></div>
-        <div class="metric"><div class="mi">↕</div><div class="mt">垂直 FOV</div><div class="mv" id="r-vf">—</div><div class="mu">mm</div></div>
-        <div class="metric"><div class="mi">🔭</div><div class="mt">鏡頭解析度</div><div class="mv" id="r-lr">—</div><div class="mu">µm</div></div>
-        <div class="metric"><div class="mi">🎯</div><div class="mt">最小檢測解析度</div><div class="mv" id="r-mr">—</div><div class="mu">µm</div></div>
-        <div class="metric"><div class="mi">📏</div><div class="mt">景深 DoF</div><div class="mv" id="r-df">—</div><div class="mu">µm</div></div>
+    <div class="res-grid">
+
+      <!-- 🔭 光學規格 -->
+      <div class="rg-sec">
+        <div class="shdr">🔭 光學規格</div>
+        <div class="cg">
+          <div class="metric"><div class="mt">系統解析度</div><div class="mv"><span id="r-or">—</span> <span class="mu">µm/px</span></div></div>
+          <div class="metric"><div class="mt">感測器對角線</div><div class="mv"><span id="r-dg">—</span> <span class="mu">mm</span></div></div>
+          <div class="metric"><div class="mt">水平 FOV / 台</div><div class="mv"><span id="r-hf">—</span> <span class="mu">mm</span></div></div>
+          <div class="metric"><div class="mt">垂直 FOV</div><div class="mv"><span id="r-vf">—</span> <span class="mu">mm</span></div></div>
+          <div class="metric"><div class="mt">鏡頭解析度</div><div class="mv"><span id="r-lr">—</span> <span class="mu">µm</span></div></div>
+          <div class="metric"><div class="mt">最小檢測解析度</div><div class="mv"><span id="r-mr">—</span> <span class="mu">µm</span></div></div>
+          <div class="metric"><div class="mt">景深 DoF</div><div class="mv"><span id="r-df">—</span> <span class="mu">µm</span></div></div>
+        </div>
       </div>
-    </div>
-    <div class="shdr">📐 掃描規格</div>
-    <div class="card">
-      <div class="cg">
-        <div class="metric"><div class="mi">📷</div><div class="mt">光學總數量</div><div class="mv" id="r-qty">—</div><div class="mu">台</div></div>
-        <div class="metric"><div class="mi">→</div><div class="mt">掃描行程</div><div class="mv" id="r-se">—</div><div class="mu">mm</div></div>
-        <div class="metric"><div class="mi">↕</div><div class="mt">換道行程</div><div class="mv" id="r-sh">—</div><div class="mu">mm</div></div>
-        <div class="metric"><div class="mi">⚡</div><div class="mt">掃描速度</div><div class="mv" id="r-sp">—</div><div class="mu">mm/s</div></div>
-        <div class="metric"><div class="mi">📸</div><div class="mt">單道拍攝張數</div><div class="mv" id="r-cp">—</div><div class="mu">張</div></div>
-        <div class="metric"><div class="mi">🔄</div><div class="mt">掃描道數</div><div class="mv" id="r-ps">—</div><div class="mu">道</div></div>
+
+      <!-- 📐 掃描規格 -->
+      <div class="rg-sec">
+        <div class="shdr">📐 掃描規格</div>
+        <div class="cg">
+          <div class="metric"><div class="mt">光學總數量</div><div class="mv"><span id="r-qty">—</span> <span class="mu">台</span></div></div>
+          <div class="metric"><div class="mt">掃描行程</div><div class="mv"><span id="r-se">—</span> <span class="mu">mm</span></div></div>
+          <div class="metric"><div class="mt">換道行程</div><div class="mv"><span id="r-sh">—</span> <span class="mu">mm</span></div></div>
+          <div class="metric"><div class="mt">掃描速度</div><div class="mv"><span id="r-sp">—</span> <span class="mu">mm/s</span></div></div>
+          <div class="metric"><div class="mt">單道拍攝張數</div><div class="mv"><span id="r-cp">—</span> <span class="mu">張</span></div></div>
+          <div class="metric"><div class="mt">掃描道數</div><div class="mv"><span id="r-ps">—</span> <span class="mu">道</span></div></div>
+        </div>
       </div>
-    </div>
-    <div class="shdr">⏰ 時序分析</div>
-    <div class="card">
-      <div class="cg">
-        <div class="metric"><div class="mi">⏱</div><div class="mt">加減速時間</div><div class="mv" id="r-at">—</div><div class="mu">s/道</div></div>
-        <div class="metric"><div class="mi">▶</div><div class="mt">等速掃描時間</div><div class="mv" id="r-cs">—</div><div class="mu">s/道</div></div>
-        <div class="metric"><div class="mi">↩</div><div class="mt">單趟返回時間</div><div class="mv" id="r-rt">—</div><div class="mu">s/道</div></div>
-        <div class="metric"><div class="mi">⏸</div><div class="mt">換道時間</div><div class="mv" id="r-ct">—</div><div class="mu">s</div></div>
-        <div class="metric"><div class="mi">⏰</div><div class="mt">單向掃描 TT</div><div class="mv" id="r-st">—</div><div class="mu">min</div></div>
-        <div class="metric"><div class="mi">🕐</div><div class="mt">來回掃描 TT</div><div class="mv" id="r-tt">—</div><div class="mu">min</div></div>
+
+      <!-- ⏰ 時序分析 -->
+      <div class="rg-sec">
+        <div class="shdr">⏰ 時序分析</div>
+        <div class="cg">
+          <div class="metric"><div class="mt">加減速時間</div><div class="mv"><span id="r-at">—</span> <span class="mu">s/道</span></div></div>
+          <div class="metric"><div class="mt">等速掃描時間</div><div class="mv"><span id="r-cs">—</span> <span class="mu">s/道</span></div></div>
+          <div class="metric"><div class="mt">單趟返回時間</div><div class="mv"><span id="r-rt">—</span> <span class="mu">s/道</span></div></div>
+          <div class="metric"><div class="mt">換道時間</div><div class="mv"><span id="r-ct">—</span> <span class="mu">s</span></div></div>
+          <div class="metric"><div class="mt">單向掃描 TT</div><div class="mv"><span id="r-st">—</span> <span class="mu">min</span></div></div>
+          <div class="metric"><div class="mt">來回掃描 TT</div><div class="mv"><span id="r-tt">—</span> <span class="mu">min</span></div></div>
+        </div>
       </div>
-    </div>
-    <div class="shdr">💻 硬體需求</div>
-    <div class="card">
-      <div class="cg cg2">
-        <div class="metric"><div class="mi">💡</div><div class="mt">不模糊曝光上限</div><div class="mv" id="r-ex">—</div><div class="mu">µs</div></div>
-        <div class="metric"><div class="mi">📡</div><div class="mt">Encoder 頻率</div><div class="mv" id="r-ef">—</div><div class="mu">MHz</div></div>
-        <div class="metric"><div class="mi">⚡</div><div class="mt">最小脈衝寬度</div><div class="mv" id="r-pw">—</div><div class="mu">ns</div></div>
-        <div class="metric"><div class="mi">💾</div><div class="mt">資料流量</div><div class="mv" id="r-dfl">—</div><div class="mu">GB/s</div></div>
+
+      <!-- 💻 硬體需求 -->
+      <div class="rg-sec">
+        <div class="shdr">💻 硬體需求</div>
+        <div class="cg cg2">
+          <div class="metric"><div class="mt">不模糊曝光上限</div><div class="mv"><span id="r-ex">—</span> <span class="mu">µs</span></div></div>
+          <div class="metric"><div class="mt">Encoder 頻率</div><div class="mv"><span id="r-ef">—</span> <span class="mu">MHz</span></div></div>
+          <div class="metric"><div class="mt">最小脈衝寬度</div><div class="mv"><span id="r-pw">—</span> <span class="mu">ns</span></div></div>
+          <div class="metric"><div class="mt">資料流量</div><div class="mv"><span id="r-dfl">—</span> <span class="mu">GB/s</span></div></div>
+        </div>
       </div>
+
     </div>
-    <div style="height:14px"></div>
   </div>
 
   <!-- Reports pane -->
@@ -709,14 +707,6 @@ function calc(){
       `暗角警告！像圈 ${p.imageCircle.toFixed(1)} mm < 感測器對角線 ${r.sensorDiag.toFixed(2)} mm`;
   } else { vw.classList.add('hide'); vw.style.display='none'; }
 
-  // Metrics
-  set('m-tt', fmt(r.roundTT));
-  set('m-spd',fmt(r.speed,1));
-  set('m-res',fmt(r.optRes,3));
-  set('m-cap',fmt(r.capturesPerPass,0));
-  set('m-pas',fmt(r.passes,0));
-  set('m-df', fmt(r.dataFlow,3));
-
   // Results
   set('r-or', fmt(r.optRes,3));   set('r-dg', fmt(r.sensorDiag,2));
   set('r-hf', fmt(r.hFOV,3));     set('r-vf', fmt(r.vFOV,3));
@@ -731,7 +721,7 @@ function calc(){
   set('r-ex', fmt(r.nonBlurExp,2));set('r-ef', fmt(r.encFreq,4));
   set('r-pw', fmt(r.minPulseNs,1));set('r-dfl',fmt(r.dataFlow,4));
 }
-function set(id,v){ document.getElementById(id).textContent=v; }
+function set(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
 
 
 
