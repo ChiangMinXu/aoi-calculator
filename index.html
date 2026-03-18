@@ -122,6 +122,22 @@ canvas#dg{display:block;width:100%;}
 .ec p{font-size:11px;color:var(--sub);}
 .empty{text-align:center;padding:40px 20px;color:var(--sub);font-size:12px;}
 
+/* ── Database pane ── */
+.db-row{display:flex;align-items:center;padding:4px 12px;border-bottom:1px solid var(--border);gap:6px;min-height:28px;}
+.db-row:last-child{border-bottom:none;}
+.db-name{flex:1;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.db-tag{font-size:9px;padding:1px 6px;border-radius:4px;background:var(--surf2);color:var(--sub);white-space:nowrap;flex-shrink:0;}
+.db-built{font-size:9px;color:var(--border);flex-shrink:0;}
+.db-del{border:none;background:none;color:rgba(255,59,48,0.65);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0;line-height:1;}
+.db-del:hover{color:#ff3b30;}
+.af{padding:8px 12px;border-top:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 4%,var(--surf));}
+.af-row{display:flex;align-items:center;gap:6px;padding:2px 0;}
+.af-row label{font-size:11px;color:var(--sub);flex:1;}
+.af-row input,.af-row select{width:100px;padding:2px 5px;border:1px solid var(--border);border-radius:4px;
+  background:var(--surf2);color:var(--text);font-size:11px;outline:none;text-align:right;}
+.af-row input.wide{flex:1;width:auto;text-align:left;}
+.af-btns{display:flex;gap:6px;margin-top:8px;}
+
 @media print{
   #app{display:block;height:auto;}
   #left,#right,header,#tabbar{display:none;}
@@ -274,7 +290,8 @@ canvas#dg{display:block;width:100%;}
 <!-- ═══════════════════ RIGHT: Results / Reports ═══════════════════ -->
 <div class="panel" id="right">
   <div id="tabbar">
-    <button class="tb on" onclick="showTab('res')" id="tab-res">📊 詳細結果</button>
+    <button class="tb on" onclick="showTab('res')" id="tab-res">📊 結果</button>
+    <button class="tb" onclick="showTab('db')"  id="tab-db">🗄 資料庫</button>
     <button class="tb" onclick="showTab('rep')" id="tab-rep">📁 報告</button>
   </div>
 
@@ -340,6 +357,76 @@ canvas#dg{display:block;width:100%;}
     </div>
     <div id="ev-list"></div>
   </div>
+
+  <!-- Database pane -->
+  <div id="pane-db" style="display:none">
+
+    <!-- ── Camera section ── -->
+    <div class="shdr">📷 相機資料庫</div>
+    <div class="card">
+      <div id="db-cam-list"></div>
+      <div style="padding:5px 10px">
+        <button class="btn-sec" style="width:100%;font-size:11px" onclick="toggleAF('cam')">＋ 新增相機</button>
+      </div>
+      <div id="af-cam" class="af" style="display:none">
+        <div class="af-row"><label>名稱</label><input class="wide" type="text" id="afc-n" placeholder="品牌 型號"></div>
+        <div class="af-row"><label>像素大小</label><input type="number" id="afc-px" value="3.45" step="0.01"><span style="font-size:10px;color:var(--sub)">µm</span></div>
+        <div class="af-row"><label>解析度 寬</label><input type="number" id="afc-rw" value="2448" step="1"><span style="font-size:10px;color:var(--sub)">px</span></div>
+        <div class="af-row"><label>解析度 高</label><input type="number" id="afc-rh" value="2048" step="1"><span style="font-size:10px;color:var(--sub)">px</span></div>
+        <div class="af-row"><label>幀率</label><input type="number" id="afc-fps" value="30" step="1"><span style="font-size:10px;color:var(--sub)">fps</span></div>
+        <div class="af-row"><label>位元深度</label><input type="number" id="afc-bit" value="8" step="1"><span style="font-size:10px;color:var(--sub)">bit</span></div>
+        <div class="af-row">
+          <label>類型</label>
+          <select id="afc-type">
+            <option value="area">面陣飛拍</option>
+            <option value="line">線掃描</option>
+          </select>
+        </div>
+        <div class="af-row">
+          <label>色彩</label>
+          <select id="afc-color">
+            <option value="gray">灰階</option>
+            <option value="color">彩色</option>
+          </select>
+        </div>
+        <div class="af-btns">
+          <button class="btn-pri" style="flex:1;font-size:11px" onclick="submitAddCam()">確認新增</button>
+          <button class="btn-sec" style="font-size:11px" onclick="toggleAF('cam')">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Lens section ── -->
+    <div class="shdr">🔭 鏡頭資料庫</div>
+    <div class="card">
+      <div id="db-lens-list"></div>
+      <div style="padding:5px 10px">
+        <button class="btn-sec" style="width:100%;font-size:11px" onclick="toggleAF('lens')">＋ 新增鏡頭</button>
+      </div>
+      <div id="af-lens" class="af" style="display:none">
+        <div class="af-row"><label>名稱</label><input class="wide" type="text" id="afl-n" placeholder="品牌 型號"></div>
+        <div class="af-row">
+          <label>類型</label>
+          <select id="afl-type">
+            <option value="objective">物鏡</option>
+            <option value="telecentric">遠心</option>
+            <option value="cctv">CCTV</option>
+          </select>
+        </div>
+        <div class="af-row"><label>放大倍率</label><input type="number" id="afl-mag" value="1" step="0.01"><span style="font-size:10px;color:var(--sub)">×</span></div>
+        <div class="af-row"><label>像圈直徑</label><input type="number" id="afl-ic" value="16" step="0.5"><span style="font-size:10px;color:var(--sub)">mm</span></div>
+        <div class="af-row"><label>工作距離</label><input type="number" id="afl-wd" value="100" step="1"><span style="font-size:10px;color:var(--sub)">mm</span></div>
+        <div class="af-row"><label>NA (物鏡用)</label><input type="number" id="afl-na" value="0.1" step="0.001"></div>
+        <div class="af-row"><label>F# (遠心/CCTV)</label><input type="number" id="afl-fn" value="8" step="0.1"></div>
+        <div class="af-row"><label>焦距 (CCTV)</label><input type="number" id="afl-fl" value="50" step="1"><span style="font-size:10px;color:var(--sub)">mm</span></div>
+        <div class="af-btns">
+          <button class="btn-pri" style="flex:1;font-size:11px" onclick="submitAddLens()">確認新增</button>
+          <button class="btn-sec" style="font-size:11px" onclick="toggleAF('lens')">取消</button>
+        </div>
+      </div>
+    </div>
+    <div style="height:14px"></div>
+  </div>
 </div>
 
 </div><!-- #app -->
@@ -383,8 +470,107 @@ const LENS = [
 let S = {lineScan:false, color:false, binning:false,
          lensType:'objective',   // 'objective' | 'telecentric' | 'cctv'
          scanAlongWidth:true};
-let evals = JSON.parse(localStorage.getItem('aoi_evals')||'[]');
+let evals    = JSON.parse(localStorage.getItem('aoi_evals')||'[]');
+let custCams = JSON.parse(localStorage.getItem('aoi_cams') ||'[]');
+let custLens = JSON.parse(localStorage.getItem('aoi_lens') ||'[]');
 let lastR = {}, lastP = {};
+
+// ── Combined accessors ──
+function allCams(){ return [...CAMS, ...custCams]; }
+function allLens(){ return [...LENS, ...custLens]; }
+function saveCustCams(){ localStorage.setItem('aoi_cams', JSON.stringify(custCams)); }
+function saveCustLens(){ localStorage.setItem('aoi_lens', JSON.stringify(custLens)); }
+
+// ── Rebuild pickers after DB changes ──
+function refreshCamPicker(){
+  const cp=document.getElementById('cam-pick'), prev=cp.value;
+  cp.innerHTML='<option value="">— 手動輸入 —</option>';
+  allCams().forEach((c,i)=>cp.appendChild(new Option(c.n,i)));
+  cp.value=(prev!==''&&+prev<allCams().length)?prev:'';
+}
+function refreshLensPicker(){
+  const lp=document.getElementById('lens-pick'), prev=lp.value;
+  lp.innerHTML='<option value="">— 手動輸入 —</option>';
+  allLens().forEach((l,i)=>lp.appendChild(new Option(l.n,i)));
+  lp.value=(prev!==''&&+prev<allLens().length)?prev:'';
+}
+
+// ── Render DB lists ──
+function renderDbLists(){
+  const camTag = c => c.line?'線掃描':c.color?'彩色面陣':'面陣';
+  const lensTag = l => l.type==='objective'?'物鏡':l.type==='telecentric'?'遠心':'CCTV';
+
+  document.getElementById('db-cam-list').innerHTML = allCams().map((c,i)=>{
+    const cust=i>=CAMS.length;
+    return `<div class="db-row">
+      <span class="db-name">${c.n}</span>
+      <span class="db-tag">${camTag(c)}</span>
+      ${cust
+        ? `<button class="db-del" onclick="delCustCam(${i-CAMS.length})" title="刪除">✕</button>`
+        : `<span class="db-built">內建</span>`}
+    </div>`;
+  }).join('') || '<div class="empty">無相機資料</div>';
+
+  document.getElementById('db-lens-list').innerHTML = allLens().map((l,i)=>{
+    const cust=i>=LENS.length;
+    return `<div class="db-row">
+      <span class="db-name">${l.n}</span>
+      <span class="db-tag">${lensTag(l)}</span>
+      ${cust
+        ? `<button class="db-del" onclick="delCustLens(${i-LENS.length})" title="刪除">✕</button>`
+        : `<span class="db-built">內建</span>`}
+    </div>`;
+  }).join('') || '<div class="empty">無鏡頭資料</div>';
+}
+
+function delCustCam(i){
+  custCams.splice(i,1); saveCustCams(); refreshCamPicker(); renderDbLists();
+}
+function delCustLens(i){
+  custLens.splice(i,1); saveCustLens(); refreshLensPicker(); renderDbLists();
+}
+
+// ── Toggle add forms ──
+function toggleAF(type){
+  const el=document.getElementById('af-'+type);
+  el.style.display=el.style.display==='none'?'':'none';
+}
+
+// ── Submit new camera ──
+function submitAddCam(){
+  const n=document.getElementById('afc-n').value.trim();
+  if(!n){alert('請輸入相機名稱');return;}
+  custCams.push({
+    n,
+    px:  +document.getElementById('afc-px').value,
+    rw:  +document.getElementById('afc-rw').value,
+    rh:  +document.getElementById('afc-rh').value,
+    fps: +document.getElementById('afc-fps').value,
+    bit: +document.getElementById('afc-bit').value,
+    line: document.getElementById('afc-type').value==='line',
+    color:document.getElementById('afc-color').value==='color',
+  });
+  saveCustCams(); refreshCamPicker(); renderDbLists();
+  toggleAF('cam'); document.getElementById('afc-n').value='';
+}
+
+// ── Submit new lens ──
+function submitAddLens(){
+  const n=document.getElementById('afl-n').value.trim();
+  if(!n){alert('請輸入鏡頭名稱');return;}
+  custLens.push({
+    n,
+    type: document.getElementById('afl-type').value,
+    mag:  +document.getElementById('afl-mag').value,
+    ic:   +document.getElementById('afl-ic').value,
+    wd:   +document.getElementById('afl-wd').value,
+    na:   +document.getElementById('afl-na').value,
+    fn:   +document.getElementById('afl-fn').value,
+    fl:   +document.getElementById('afl-fl').value,
+  });
+  saveCustLens(); refreshLensPicker(); renderDbLists();
+  toggleAF('lens'); document.getElementById('afl-n').value='';
+}
 
 // ═══════════════════════════════════════════
 // SEGMENTED CONTROLS
@@ -765,20 +951,20 @@ function ha(hex,a){
 // ═══════════════════════════════════════════
 function initPickers(){
   const cp=document.getElementById('cam-pick');
-  CAMS.forEach((c,i)=>cp.appendChild(new Option(c.n,i)));
+  allCams().forEach((c,i)=>cp.appendChild(new Option(c.n,i)));
   const lp=document.getElementById('lens-pick');
-  LENS.forEach((l,i)=>lp.appendChild(new Option(l.n,i)));
+  allLens().forEach((l,i)=>lp.appendChild(new Option(l.n,i)));
 }
 function applyCamera(){
   const i=document.getElementById('cam-pick').value; if(i==='')return;
-  const c=CAMS[+i];
+  const c=allCams()[+i];
   sv('p-px',c.px); sv('p-rw',c.rw); sv('p-rh',c.rh);
   sv('p-fps',c.fps); sv('p-bit',c.bit);
   setColor(c.color||false); setCamType(c.line||false); calc();
 }
 function applyLens(){
   const i=document.getElementById('lens-pick').value; if(i==='')return;
-  const l=LENS[+i];
+  const l=allLens()[+i];
   sv('p-mag',l.mag); sv('p-ic',l.ic); sv('p-wd',l.wd);
   sv('p-na',l.na||0); sv('p-fn',l.fn||8); sv('p-fl',l.fl||50);
   setLensType(l.type||'objective'); calc();
@@ -796,8 +982,8 @@ function saveEval(){
     id:Date.now(),
     name:document.getElementById('eval-name').value||'新評估',
     date:new Date().toLocaleString('zh-TW'),
-    camera:ci!==''?CAMS[+ci].n:'手動輸入',
-    lens:li!==''?LENS[+li].n:'手動輸入',
+    camera:ci!==''?allCams()[+ci].n:'手動輸入',
+    lens:li!==''?allLens()[+li].n:'手動輸入',
     notes:document.getElementById('eval-notes').value,
     p, r
   });
@@ -852,9 +1038,12 @@ function exportPDF(){ window.print(); }
 function showTab(t){
   document.getElementById('pane-res').style.display=t==='res'?'':'none';
   document.getElementById('pane-rep').style.display=t==='rep'?'':'none';
+  document.getElementById('pane-db').style.display =t==='db' ?'':'none';
   document.getElementById('tab-res').classList.toggle('on',t==='res');
   document.getElementById('tab-rep').classList.toggle('on',t==='rep');
+  document.getElementById('tab-db').classList.toggle('on', t==='db');
   if(t==='rep') renderEvals();
+  if(t==='db')  renderDbLists();
 }
 
 // ═══════════════════════════════════════════
