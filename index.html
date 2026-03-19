@@ -176,7 +176,8 @@ header p{font-size:10px;color:var(--sub);}
 .rpt-kv{display:flex;align-items:baseline;gap:6px;margin-bottom:8px;}
 .rpt-k{font-size:9px;color:var(--sub);width:56px;flex-shrink:0;}
 .rpt-v{font-size:12px;font-weight:600;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.rpt-tt-kv .rpt-v{font-size:17px;color:var(--accent);}
+.rpt-tt-kv .rpt-v{font-size:17px;color:var(--accent);transition:color .2s;}
+.rpt-tt-kv .rpt-v.over{color:#ff3b30;}
 .rpt-tt-kv .rpt-unit{font-size:12px;}
 
 /* Diagram column */
@@ -409,7 +410,7 @@ header p{font-size:10px;color:var(--sub);}
           <div class="rpt-field">
             <div class="rpt-flabel">目標 TT</div>
             <div class="rpt-row">
-              <input type="number" id="rpt-target-tt" class="rpt-tinput" placeholder="—" oninput="saveRptMeta()">
+              <input type="number" id="rpt-target-tt" class="rpt-tinput" placeholder="—" oninput="saveRptMeta();calc()">
               <span class="rpt-unit">min</span>
             </div>
           </div>
@@ -1064,6 +1065,9 @@ function calc(){
   set('rpt-arr',  `${p.nCams} 列 × ${p.nRows} 排`);
   set('rpt-mode', p.scanMode==='round'?'來回掃描':'單向掃描');
   set('rpt-tt',   fmt(ttVal, 2));
+  const ttEl = document.getElementById('rpt-tt');
+  const targetTT = parseFloat(document.getElementById('rpt-target-tt').value);
+  if(ttEl) ttEl.classList.toggle('over', !isNaN(targetTT) && targetTT > 0 && ttVal > targetTT);
   const datEl=document.getElementById('rpt-date');
   if(datEl) datEl.textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
 }
