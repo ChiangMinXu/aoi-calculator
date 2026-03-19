@@ -197,6 +197,13 @@ header p{font-size:10px;color:var(--sub);}
 .rpt-history{padding:0 10px 8px;}
 .rpt-ht{font-size:10px;font-weight:600;color:var(--sub);padding:6px 0 4px;}
 
+/* ── About button ── */
+.btn-about{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+           background:var(--surf2);color:var(--sub);cursor:pointer;
+           display:flex;align-items:center;justify-content:center;flex-shrink:0;
+           transition:.15s;}
+.btn-about:hover{border-color:var(--accent);color:var(--accent);}
+
 /* ── Undo Toast ── */
 #toast{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);
@@ -218,7 +225,7 @@ header p{font-size:10px;color:var(--sub);}
 /* Print */
 @media print{
   #app{display:block!important;height:auto;}
-  header,#left,#tabbar,#pane-db,#pane-hist,.rpt-actions,#vwarn{display:none!important;}
+  header,#left,#tabbar,#pane-db,#pane-hist,.rpt-actions,#vwarn,#about-modal,#about-overlay,#toast{display:none!important;}
   #right{padding:0!important;background:transparent!important;}
   #pane-res{display:block!important;overflow:visible;}
   .rpt-card{margin:0;border:none;border-radius:0;box-shadow:none;}
@@ -235,11 +242,46 @@ header p{font-size:10px;color:var(--sub);}
     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
   </svg>
   <div><h1>AOI 光學架構評估計算器</h1><p>Automated Optical Inspection — System Design Tool</p></div>
-  <div style="margin-left:auto;display:flex;gap:8px;">
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
     <button class="btn-sec" onclick="exportPDF()">📄 匯出 PDF</button>
     <button class="btn-pri" onclick="saveEval()">💾 儲存評估</button>
+    <button class="btn-about" onclick="toggleAbout()" title="開發者資訊">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+    </button>
   </div>
 </header>
+
+<!-- ── About Modal ── -->
+<div id="about-overlay" onclick="toggleAbout()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;backdrop-filter:blur(2px);"></div>
+<div id="about-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+     background:var(--surf);border:1px solid var(--border);border-radius:14px;
+     padding:24px 28px;z-index:2001;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div>
+      <div style="font-size:14px;font-weight:700;">AOI 光學架構評估計算器</div>
+      <div style="font-size:11px;color:var(--sub);margin-top:2px;">開發者資訊</div>
+    </div>
+    <button onclick="toggleAbout()" style="background:none;border:none;cursor:pointer;color:var(--sub);font-size:18px;line-height:1;padding:2px 4px;">✕</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surf2);border-radius:9px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">M</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">MinXu</div>
+        <a href="mailto:MinXu.Chiang@auo.com" style="font-size:11px;color:var(--accent);text-decoration:none;">MinXu.Chiang@auo.com</a>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surf2);border-radius:9px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:#34c759;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">J</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">JohnnyYang</div>
+        <a href="mailto:Johnny.Yang@auo.com" style="font-size:11px;color:var(--accent);text-decoration:none;">Johnny.Yang@auo.com</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════ LEFT: Parameters ═══════════════════ -->
 <div class="panel" id="left">
@@ -1164,6 +1206,13 @@ function loadEval(i){
 function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.stringify(evals)); renderEvals(); }
 function exportEval(i){ loadEval(i); setTimeout(()=>window.print(),300); }
 function exportPDF(){ window.print(); }
+
+// ── About modal ──
+function toggleAbout(){
+  const show = document.getElementById('about-modal').style.display === 'none';
+  document.getElementById('about-modal').style.display  = show ? '' : 'none';
+  document.getElementById('about-overlay').style.display = show ? '' : 'none';
+}
 
 // ═══════════════════════════════════════════
 // TABS
