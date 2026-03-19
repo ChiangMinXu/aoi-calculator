@@ -49,6 +49,12 @@ header p{font-size:10px;color:var(--sub);}
   font-family:'SF Mono',ui-monospace,monospace;text-align:right;outline:none;flex-shrink:0;
 }
 .row input[type=number]:focus{border-color:var(--accent);}
+.row input[type=number]:disabled{opacity:0.55;background:var(--surf)!important;cursor:default;}
+.row select.fn-sel{
+  width:84px;padding:2px 6px;border:1px solid var(--border);border-radius:5px;
+  background:var(--surf2);color:var(--text);font-size:12px;
+  font-family:'SF Mono',ui-monospace,monospace;text-align:right;outline:none;flex-shrink:0;
+}
 .row input[type=text]{
   flex:1;border:none;background:transparent;color:var(--text);font-size:13px;outline:none;text-align:right;
 }
@@ -380,11 +386,12 @@ header p{font-size:10px;color:var(--sub);}
         <button onclick="setLensType('cctv')">CCTV</button>
       </div>
     </div>
-    <div class="row"><label>放大倍率</label><input type="number" id="p-mag" value="5" step="0.1" oninput="calc()"><span class="unit">×</span></div>
+    <div class="row"><label>放大倍率</label><input type="number" id="p-mag" value="5" step="0.1" oninput="calc()" title="CCTV 模式下依焦距與工作距離自動計算"><span class="unit">×</span></div>
     <div class="row"><label>像圈直徑</label><input type="number" id="p-ic" value="25" step="0.5" oninput="calc()"><span class="unit">mm</span></div>
     <div class="row"><label>工作距離</label><input type="number" id="p-wd" value="34" step="1" oninput="calc()"><span class="unit">mm</span></div>
     <div class="row" id="row-na"><label>NA (數值孔徑)</label><input type="number" id="p-na" value="0.14" step="0.001" oninput="calc()"><span class="unit"></span></div>
-    <div class="row" id="row-fn" style="display:none"><label>F# (光圈)</label><input type="number" id="p-fn" value="8" step="0.1" oninput="calc()"><span class="unit"></span></div>
+    <div class="row" id="row-fn" style="display:none"><label>F# 固定光圈</label><input type="number" id="p-fn" value="8" step="0.1" oninput="calc()"><span class="unit"></span></div>
+    <div class="row" id="row-fn-cctv" style="display:none"><label>F# 工作光圈</label><select id="p-fn-sel" class="fn-sel" onchange="onFnSelChange()"></select><span class="unit"></span></div>
     <div class="row" id="row-fl" style="display:none"><label>焦距</label><input type="number" id="p-fl" value="50" step="1" oninput="calc()"><span class="unit">mm</span></div>
     <div class="row"><label>光源波長</label><input type="number" id="p-wl" value="550" step="10" oninput="calc()"><span class="unit">nm</span></div>
   </div>
@@ -624,18 +631,30 @@ header p{font-size:10px;color:var(--sub);}
         <div class="af-row"><label>名稱</label><input class="wide" type="text" id="afl-n" placeholder="品牌 型號"></div>
         <div class="af-row">
           <label>類型</label>
-          <select id="afl-type">
+          <select id="afl-type" onchange="onAflTypeChange()">
             <option value="objective">物鏡</option>
             <option value="telecentric">遠心</option>
             <option value="cctv">CCTV</option>
           </select>
         </div>
-        <div class="af-row"><label>放大倍率</label><input type="number" id="afl-mag" value="1" step="0.01"><span style="font-size:10px;color:var(--sub)">×</span></div>
+        <!-- 物鏡 + 遠心：固定倍率 -->
+        <div class="af-row" id="afl-row-mag"><label>放大倍率</label><input type="number" id="afl-mag" value="1" step="0.01"><span style="font-size:10px;color:var(--sub)">×</span></div>
+        <!-- 全類型 -->
         <div class="af-row"><label>像圈直徑</label><input type="number" id="afl-ic" value="16" step="0.5"><span style="font-size:10px;color:var(--sub)">mm</span></div>
-        <div class="af-row"><label>工作距離</label><input type="number" id="afl-wd" value="100" step="1"><span style="font-size:10px;color:var(--sub)">mm</span></div>
-        <div class="af-row"><label>NA (物鏡用)</label><input type="number" id="afl-na" value="0.1" step="0.001"></div>
-        <div class="af-row"><label>F# (遠心/CCTV)</label><input type="number" id="afl-fn" value="8" step="0.1"></div>
-        <div class="af-row"><label>焦距 (CCTV)</label><input type="number" id="afl-fl" value="50" step="1"><span style="font-size:10px;color:var(--sub)">mm</span></div>
+        <div class="af-row"><label>工作距離</label><input type="number" id="afl-wd" value="100" step="1" oninput="updateAflMagComputed()"><span style="font-size:10px;color:var(--sub)">mm</span></div>
+        <!-- 物鏡：NA -->
+        <div class="af-row" id="afl-row-na"><label>NA</label><input type="number" id="afl-na" value="0.1" step="0.001"></div>
+        <!-- 遠心：單一 F# -->
+        <div class="af-row" id="afl-row-fn" style="display:none"><label>F# 固定光圈</label><input type="number" id="afl-fn" value="8" step="0.1"></div>
+        <!-- CCTV：F# 範圍 + 焦距 + 自動倍率 -->
+        <div class="af-row" id="afl-row-fnmin" style="display:none"><label>F# 最大光圈</label><input type="number" id="afl-fnmin" value="2.8" step="0.1"><span style="font-size:10px;color:var(--sub)">開放端</span></div>
+        <div class="af-row" id="afl-row-fnmax" style="display:none"><label>F# 最小光圈</label><input type="number" id="afl-fnmax" value="22" step="0.1"><span style="font-size:10px;color:var(--sub)">收縮端</span></div>
+        <div class="af-row" id="afl-row-fl" style="display:none"><label>焦距</label><input type="number" id="afl-fl" value="50" step="1" oninput="updateAflMagComputed()"><span style="font-size:10px;color:var(--sub)">mm</span></div>
+        <div class="af-row" id="afl-row-magcalc" style="display:none">
+          <label style="color:var(--sub)">參考倍率</label>
+          <span id="afl-mag-computed" style="font-size:12px;font-family:'SF Mono',monospace;color:var(--sub)">—</span>
+          <span style="font-size:10px;color:var(--sub)">× (依 WD 計算)</span>
+        </div>
         <div class="af-btns">
           <button class="btn-pri" style="flex:1;font-size:11px" onclick="submitAddLens()">確認新增</button>
           <button class="btn-sec" style="font-size:11px" onclick="toggleAF('lens')">取消</button>
@@ -803,16 +822,25 @@ function submitAddCam(){
 function submitAddLens(){
   const n=document.getElementById('afl-n').value.trim();
   if(!n){alert('請輸入鏡頭名稱');return;}
-  custLens.push({
-    n,
-    type: document.getElementById('afl-type').value,
-    mag:  +document.getElementById('afl-mag').value,
-    ic:   +document.getElementById('afl-ic').value,
-    wd:   +document.getElementById('afl-wd').value,
-    na:   +document.getElementById('afl-na').value,
-    fn:   +document.getElementById('afl-fn').value,
-    fl:   +document.getElementById('afl-fl').value,
-  });
+  const t=document.getElementById('afl-type').value;
+  const lens = {
+    n, type:t,
+    ic: +document.getElementById('afl-ic').value,
+    wd: +document.getElementById('afl-wd').value,
+  };
+  if(t==='objective'){
+    lens.mag = +document.getElementById('afl-mag').value;
+    lens.na  = +document.getElementById('afl-na').value;
+  } else if(t==='telecentric'){
+    lens.mag = +document.getElementById('afl-mag').value;
+    lens.fn  = +document.getElementById('afl-fn').value;
+  } else { // cctv
+    lens.fl     = +document.getElementById('afl-fl').value;
+    lens.fn_min = +document.getElementById('afl-fnmin').value;
+    lens.fn_max = +document.getElementById('afl-fnmax').value;
+    // mag auto-computed from fl+wd on use
+  }
+  custLens.push(lens);
   saveCustLens(); refreshLensPicker(); renderDbLists();
   toggleAF('lens'); document.getElementById('afl-n').value='';
 }
@@ -835,13 +863,56 @@ function setLensType(t){
   S.lensType=t;
   const idx = t==='objective'?0 : t==='telecentric'?1 : 2;
   segSet('lens-type-seg', idx);
-  document.getElementById('row-na').style.display = t==='objective'    ? '' : 'none';
-  document.getElementById('row-fn').style.display = t!=='objective'    ? '' : 'none';
-  document.getElementById('row-fl').style.display = t==='cctv'         ? '' : 'none';
+  document.getElementById('row-na').style.display       = t==='objective'    ? '' : 'none';
+  document.getElementById('row-fn').style.display       = t==='telecentric'  ? '' : 'none';
+  document.getElementById('row-fn-cctv').style.display  = t==='cctv'         ? '' : 'none';
+  document.getElementById('row-fl').style.display       = t==='cctv'         ? '' : 'none';
+  const magEl = document.getElementById('p-mag');
+  magEl.disabled = t==='cctv';
+  // Populate fn-sel with full standard stops when switching to CCTV manually
+  if(t==='cctv'){
+    const sel = document.getElementById('p-fn-sel');
+    if(sel.options.length === 0) buildFnStops(1.0, 32);
+  }
   calc();
 }
 function setScanDir(w){ S.scanAlongWidth=w; segSet('scan-dir-seg',w?0:1); calc(); }
 function setScanMode(m){ S.scanMode=m; segSet('scan-mode-seg',m==='single'?0:1); calc(); }
+
+// ── CCTV aperture stop helpers ──
+const F_STOPS = [1.0, 1.4, 2.0, 2.8, 4.0, 5.6, 8.0, 11, 16, 22, 32];
+function buildFnStops(fnMin, fnMax){
+  const sel = document.getElementById('p-fn-sel');
+  const stops = F_STOPS.filter(f => f >= fnMin - 0.01 && f <= fnMax + 0.01);
+  if(!stops.length) stops.push(fnMin);
+  const curFn = +document.getElementById('p-fn').value || 8;
+  const closest = stops.reduce((a,b) => Math.abs(b-curFn) < Math.abs(a-curFn) ? b : a);
+  sel.innerHTML = stops.map(f => `<option value="${f}"${f===closest?' selected':''}>f/${f}</option>`).join('');
+  sv('p-fn', closest);
+}
+function onFnSelChange(){
+  sv('p-fn', document.getElementById('p-fn-sel').value);
+  calc();
+}
+
+// ── Add-lens form: toggle fields by type ──
+function onAflTypeChange(){
+  const t = document.getElementById('afl-type').value;
+  document.getElementById('afl-row-mag').style.display     = t!=='cctv'         ? '' : 'none';
+  document.getElementById('afl-row-na').style.display      = t==='objective'     ? '' : 'none';
+  document.getElementById('afl-row-fn').style.display      = t==='telecentric'   ? '' : 'none';
+  document.getElementById('afl-row-fnmin').style.display   = t==='cctv'          ? '' : 'none';
+  document.getElementById('afl-row-fnmax').style.display   = t==='cctv'          ? '' : 'none';
+  document.getElementById('afl-row-fl').style.display      = t==='cctv'          ? '' : 'none';
+  document.getElementById('afl-row-magcalc').style.display = t==='cctv'          ? '' : 'none';
+  if(t==='cctv') updateAflMagComputed();
+}
+function updateAflMagComputed(){
+  const fl = +document.getElementById('afl-fl').value;
+  const wd = +document.getElementById('afl-wd').value;
+  const el = document.getElementById('afl-mag-computed');
+  if(el) el.textContent = (fl>0 && wd>fl) ? (fl/(wd-fl)).toFixed(3) : '—';
+}
 
 // ═══════════════════════════════════════════
 // READ PARAMS
@@ -852,7 +923,11 @@ function P(){
     fps:+v('p-fps'), bit:+v('p-bit'),
     lineScan:S.lineScan, color:S.color, binning:S.binning,
     mag:+v('p-mag'), imageCircle:+v('p-ic'), wd:+v('p-wd'),
-    na:+v('p-na'), fn:+v('p-fn'), fl:+v('p-fl'),
+    na:+v('p-na'),
+    fn: S.lensType==='cctv'
+          ? (+document.getElementById('p-fn-sel').value || +v('p-fn'))
+          : +v('p-fn'),
+    fl:+v('p-fl'),
     lensType:S.lensType,
     objective:S.lensType==='objective', telecentric:S.lensType==='telecentric', wl:+v('p-wl'),
     sampleW:+v('p-sw'), sampleH:+v('p-sh'),
@@ -916,17 +991,20 @@ function calculate(p){
   r.camResNyq = 2.3*r.optRes;
   r.minDetRes = Math.max(r.camResNyq, r.lensRes);
 
-  if(p.objective&&p.na>0){
-    r.dof = (p.wl/(p.na*p.na*2))/1000;
-  } else if(p.telecentric&&p.fn>0){
-    // 遠心鏡頭：景深 ≈ 2 * F# * pixel_size_at_object / mag²
-    const pxObj = p.pixelSize/p.mag/1000; // mm，物方像素大小
-    r.dof = 2*p.fn*pxObj*1000; // µm
+  if(p.objective && p.na>0){
+    // 物鏡：波動光學景深  DoF = λ / (2·NA²)
+    r.dof = (p.wl / (p.na * p.na * 2)) / 1000; // µm
+  } else if(p.telecentric && p.fn>0 && p.mag>0){
+    // 遠心鏡頭：幾何景深  DoF = 2 · F# · pixel_size / mag
+    r.dof = 2 * p.fn * p.pixelSize / p.mag; // µm
+  } else if(p.lensType==='cctv' && p.fl>0 && p.fn>0 && p.mag>0){
+    // CCTV：薄透鏡景深  DoF = 2 · F# · c · (1+m) / m²
+    // c = 容許彌散圓 = 1 pixel（µm）
+    const c = p.pixelSize; // µm
+    const m = p.mag;
+    r.dof = 2 * p.fn * c * (1 + m) / (m * m); // µm
   } else {
-    const delta=Math.max(r.sensorDiag/1730,p.pixelSize/1000);
-    const F=p.fl,u=p.wd,N=p.fn;
-    const d1=F*F+N*delta*u, d2=F*F-N*delta*u;
-    r.dof = (F>0&&d1!==0&&d2!==0) ? ((N*delta*u*u)/d1+(N*delta*u*u)/d2)*1000 : 0;
+    r.dof = 0;
   }
 
   const passes=r.passes;
@@ -1064,6 +1142,11 @@ function drawDiagram(canvasId='dg'){
 function fmt(v,d=2){ return (!isFinite(v)||v===0)?'—':v.toFixed(d); }
 
 function calc(){
+  // CCTV: auto-compute magnification from focal length + working distance
+  if(S.lensType==='cctv'){
+    const fl=+v('p-fl'), wd=+v('p-wd');
+    if(fl>0 && wd>fl) sv('p-mag', (fl/(wd-fl)).toFixed(4));
+  }
   const p = P();
   const r = calculate(p); lastR=r;
   const ci=document.getElementById('cam-pick').value;
@@ -1141,8 +1224,19 @@ function applyCamera(){
 function applyLens(){
   const i=document.getElementById('lens-pick').value; if(i==='')return;
   const l=allLens()[+i];
-  sv('p-mag',l.mag); sv('p-ic',l.ic); sv('p-wd',l.wd);
-  sv('p-na',l.na||0); sv('p-fn',l.fn||8); sv('p-fl',l.fl||50);
+  sv('p-ic',l.ic); sv('p-wd',l.wd);
+  if(l.type==='cctv'){
+    sv('p-fl', l.fl||50);
+    const fnMin = l.fn_min ?? l.fn ?? 1.4;
+    const fnMax = l.fn_max ?? l.fn ?? 32;
+    buildFnStops(fnMin, fnMax);
+    // mag will be auto-computed in calc() from fl+wd
+  } else {
+    sv('p-mag',l.mag||1);
+    sv('p-na',l.na||0);
+    sv('p-fn',l.fn||8);
+    sv('p-fl',l.fl||50);
+  }
   setLensType(l.type||'objective'); calc();
 }
 function sv(id,val){ document.getElementById(id).value=val; }
@@ -1206,6 +1300,20 @@ function loadEval(i){
   if(e.lensIdx!==undefined) document.getElementById('lens-pick').value=e.lensIdx;
   setCamType(p.lineScan); setColor(p.color); setBin(p.binning);
   setLensType(p.lensType||'objective'); setScanDir(p.scanAlongWidth); setScanMode(p.scanMode||'single');
+  // Restore CCTV fn select: rebuild stops from saved fn ±2 stops range
+  if((p.lensType||'objective')==='cctv'){
+    const li=document.getElementById('lens-pick').value;
+    if(li!==''){
+      const l=allLens()[+li];
+      const fnMin=l.fn_min??l.fn??1.4, fnMax=l.fn_max??l.fn??32;
+      buildFnStops(fnMin, fnMax);
+    } else {
+      buildFnStops(1.0, 32);
+    }
+    sv('p-fn', p.fn);
+    const sel=document.getElementById('p-fn-sel');
+    if(sel) sel.value=p.fn;
+  }
   calc(); showTab('res');
 }
 function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.stringify(evals)); renderEvals(); }
