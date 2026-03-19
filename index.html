@@ -290,11 +290,16 @@ header p{font-size:10px;color:var(--sub);}
 /* Print */
 @media print{
   #app{display:block!important;height:auto;}
-  header,#left,#tabbar,#pane-db,#pane-hist,.rpt-actions,#vwarn,#about-modal,#about-overlay,#imp-modal,#imp-overlay,#toast{display:none!important;}
+  header,#left,#tabbar,#pane-db,#pane-hist,.rpt-actions,#vwarn,#about-modal,#about-overlay,#imp-modal,#imp-overlay,#toast,#st-vwarn{display:none!important;}
   #right{padding:0!important;background:transparent!important;}
-  #pane-res{display:block!important;overflow:visible;}
   .rpt-card{margin:0;border:none;border-radius:0;box-shadow:none;}
   @page{size:29.7cm 16.7cm landscape;margin:8mm;}
+  /* 掃描模式列印 */
+  body.print-scan  #pane-res        {display:block!important;overflow:visible;}
+  body.print-scan  #pane-static-res {display:none!important;}
+  /* 靜態模式列印 */
+  body.print-static #pane-static-res{display:block!important;overflow:visible;}
+  body.print-static #pane-res       {display:none!important;}
 }
 </style>
 </head>
@@ -1789,8 +1794,14 @@ function loadEval(i){
   calc(); showTab('res');
 }
 function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.stringify(evals)); renderEvals(); }
-function exportEval(i){ loadEval(i); setTimeout(()=>window.print(),300); }
-function exportPDF(){ window.print(); }
+function exportEval(i){ loadEval(i); setTimeout(()=>printWithMode('scan'),300); }
+function exportPDF(){  printWithMode(S.mode); }
+function printWithMode(mode){
+  document.body.classList.remove('print-scan','print-static');
+  document.body.classList.add(mode==='static'?'print-static':'print-scan');
+  window.print();
+  setTimeout(()=>document.body.classList.remove('print-scan','print-static'),1000);
+}
 
 // ═══════════════════════════════════════════
 // CARD CUSTOMIZATION
