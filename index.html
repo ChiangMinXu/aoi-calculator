@@ -546,6 +546,13 @@ header p{font-size:10px;color:var(--sub);}
               <span class="rpt-unit">min</span>
             </div>
           </div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">目標檢測精度</div>
+            <div class="rpt-row">
+              <input type="number" id="rpt-target-res" class="rpt-tinput" placeholder="—" step="0.1" oninput="saveRptMeta();calc()">
+              <span class="rpt-unit">µm</span>
+            </div>
+          </div>
         </div>
 
         <div class="rpt-col">
@@ -1330,6 +1337,12 @@ function calc(){
   const ttEl = document.getElementById('rpt-tt');
   const targetTT = parseFloat(document.getElementById('rpt-target-tt').value);
   if(ttEl) ttEl.classList.toggle('over', !isNaN(targetTT) && targetTT > 0 && ttVal > targetTT);
+
+  // 系統解析度 vs 目標檢測精度
+  const targetRes = parseFloat(document.getElementById('rpt-target-res').value);
+  const resOver = !isNaN(targetRes) && targetRes > 0 && r.optRes > targetRes;
+  const orEl = document.getElementById('r-or');
+  if(orEl) orEl.classList.toggle('over', resOver);
   const datEl=document.getElementById('rpt-date');
   if(datEl) datEl.textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
 }
@@ -1733,7 +1746,8 @@ function saveRptMeta(){
   localStorage.setItem('aoi_rpt_meta', JSON.stringify({
     proj: document.getElementById('rpt-proj').value,
     desc: document.getElementById('rpt-desc').value,
-    targetTT: document.getElementById('rpt-target-tt').value
+    targetTT:  document.getElementById('rpt-target-tt').value,
+    targetRes: document.getElementById('rpt-target-res').value,
   }));
 }
 function loadRptMeta(){
@@ -1742,8 +1756,9 @@ function loadRptMeta(){
     document.getElementById('rpt-proj').value  = m.proj;
     document.getElementById('eval-name').value = m.proj;
   }
-  if(m.desc)     document.getElementById('rpt-desc').value = m.desc;
-  if(m.targetTT) document.getElementById('rpt-target-tt').value = m.targetTT;
+  if(m.desc)      document.getElementById('rpt-desc').value = m.desc;
+  if(m.targetTT)  document.getElementById('rpt-target-tt').value = m.targetTT;
+  if(m.targetRes) document.getElementById('rpt-target-res').value = m.targetRes;
 }
 
 // ═══════════════════════════════════════════
