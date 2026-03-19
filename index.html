@@ -446,6 +446,16 @@ header p{font-size:10px;color:var(--sub);}
         </div>
 
         <div class="rg-sec">
+          <div class="shdr">💻 硬體需求</div>
+          <div class="cg cg2">
+            <div class="metric"><div class="mt">不模糊曝光上限</div><div class="mv"><span id="r-ex">—</span> <span class="mu">µs</span></div></div>
+            <div class="metric"><div class="mt">Encoder 頻率</div><div class="mv"><span id="r-ef">—</span> <span class="mu">MHz</span></div></div>
+            <div class="metric"><div class="mt">最小脈衝寬度</div><div class="mv"><span id="r-pw">—</span> <span class="mu">ns</span></div></div>
+            <div class="metric"><div class="mt">資料流量</div><div class="mv"><span id="r-dfl">—</span> <span class="mu">GB/s</span></div></div>
+          </div>
+        </div>
+
+        <div class="rg-sec">
           <div class="shdr">⏰ 時序分析</div>
           <div class="cg">
             <div class="metric"><div class="mt">加減速時間</div><div class="mv"><span id="r-at">—</span> <span class="mu">s/道</span></div></div>
@@ -456,23 +466,9 @@ header p{font-size:10px;color:var(--sub);}
           </div>
         </div>
 
-        <div class="rg-sec">
-          <div class="shdr">💻 硬體需求</div>
-          <div class="cg cg2">
-            <div class="metric"><div class="mt">不模糊曝光上限</div><div class="mv"><span id="r-ex">—</span> <span class="mu">µs</span></div></div>
-            <div class="metric"><div class="mt">Encoder 頻率</div><div class="mv"><span id="r-ef">—</span> <span class="mu">MHz</span></div></div>
-            <div class="metric"><div class="mt">最小脈衝寬度</div><div class="mv"><span id="r-pw">—</span> <span class="mu">ns</span></div></div>
-            <div class="metric"><div class="mt">資料流量</div><div class="mv"><span id="r-dfl">—</span> <span class="mu">GB/s</span></div></div>
-          </div>
-        </div>
-
       </div><!-- /res-grid -->
     </div><!-- /rpt-card -->
 
-    <!-- Actions -->
-    <div class="rpt-actions">
-      <button class="btn-pri" onclick="window.print()">💾 存成 PDF</button>
-    </div>
   </div>
 
   <!-- History pane -->
@@ -1038,6 +1034,7 @@ function saveEval(){
     date:new Date().toLocaleString('zh-TW'),
     camera:ci!==''?allCams()[+ci].n:'手動輸入',
     lens:li!==''?allLens()[+li].n:'手動輸入',
+    camIdx:ci, lensIdx:li,
     notes:document.getElementById('eval-notes').value,
     p, r
   });
@@ -1078,6 +1075,9 @@ function loadEval(i){
   sv('p-ac',p.acc); sv('p-ct',p.changeSlice); sv('p-bs',p.backSpeed); sv('p-ep',p.encPitch);
   document.getElementById('eval-name').value=e.name;
   document.getElementById('eval-notes').value=e.notes;
+  // Restore camera / lens picker selections
+  if(e.camIdx!==undefined) document.getElementById('cam-pick').value=e.camIdx;
+  if(e.lensIdx!==undefined) document.getElementById('lens-pick').value=e.lensIdx;
   setCamType(p.lineScan); setColor(p.color); setBin(p.binning);
   setLensType(p.lensType||'objective'); setScanDir(p.scanAlongWidth); setScanMode(p.scanMode||'single');
   calc(); showTab('res');
