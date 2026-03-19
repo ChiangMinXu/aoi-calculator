@@ -1347,9 +1347,9 @@ function calc(){
   if(orEl){
     orEl.classList.remove('over','warn','good');
     if(!isNaN(targetRes) && targetRes > 0){
-      if(r.optRes > targetRes * 2)       orEl.classList.add('over');  // 紅：超過目標2倍
-      else if(r.optRes > targetRes)      orEl.classList.add('warn');  // 黃：超過目標但≤2倍
-      else                               orEl.classList.add('good');  // 綠：符合目標
+      if(r.optRes > targetRes / 2)        orEl.classList.add('over');  // 紅：解析度 > 目標/2（餘裕不足2倍）
+      else if(r.optRes > targetRes / 3)  orEl.classList.add('warn');  // 黃：目標/3 < 解析度 ≤ 目標/2（2~3倍餘裕）
+      else                               orEl.classList.add('good');  // 綠：解析度 ≤ 目標/3（3倍以上餘裕）
     }
   }
   const datEl=document.getElementById('rpt-date');
