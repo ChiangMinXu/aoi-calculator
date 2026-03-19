@@ -265,6 +265,7 @@ header p{font-size:10px;color:var(--sub);}
   header p{display:none;}
   header h1{font-size:13px;}
   .btn-sec,.btn-pri{font-size:11px;padding:4px 8px;}
+  #mode-seg button{padding:3px 7px;font-size:10px;}
   .btn-about{padding:4px 5px;}
   /* Report card: stack to 1 col in portrait */
   .rpt-body{grid-template-columns:1fr;}
@@ -310,6 +311,10 @@ header p{font-size:10px;color:var(--sub);}
   <img src="auo-logo.png" width="28" height="28" style="object-fit:contain;flex-shrink:0;" alt="AUO">
   <div><h1>AOI 光學架構評估計算器</h1><p>Automated Optical Inspection — System Design Tool</p></div>
   <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+    <div class="seg" id="mode-seg" style="flex-shrink:0;font-size:11px;">
+      <button class="on" onclick="setMode('scan')">掃描取像</button>
+      <button onclick="setMode('static')">靜態取像</button>
+    </div>
     <button class="btn-sec" onclick="exportPDF()">📄 匯出 PDF</button>
     <button class="btn-pri" onclick="saveEval()">💾 儲存評估</button>
     <button class="btn-about" onclick="toggleAbout()" title="開發者資訊">
@@ -462,7 +467,8 @@ header p{font-size:10px;color:var(--sub);}
     <div class="row"><label>光源波長</label><input type="number" id="p-wl" value="550" step="10" oninput="calc()"><span class="unit">nm</span></div>
   </div>
 
-  <!-- ── Scan ── -->
+  <!-- ── Scan section (hidden in static mode) ── -->
+  <div id="sec-scan">
   <div class="shdr">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
       <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
@@ -494,6 +500,21 @@ header p{font-size:10px;color:var(--sub);}
     <div class="row"><label>返回速度</label><input type="number" id="p-bs" value="300" step="10" oninput="calc()"><span class="unit">mm/s</span></div>
     <div class="row"><label>Encoder 解析度</label><input type="number" id="p-ep" value="0.05" step="0.001" oninput="calc()"><span class="unit">µm</span></div>
   </div>
+  </div><!-- /#sec-scan -->
+
+  <!-- ── Static section (hidden in scan mode) ── -->
+  <div id="sec-static" style="display:none">
+  <div class="shdr">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/>
+    </svg>靜態設定
+  </div>
+  <div class="card">
+    <div class="row"><label>待測範圍 X</label><input type="number" id="st-objw" value="300" step="1" oninput="calcStatic()"><span class="unit">mm</span></div>
+    <div class="row"><label>待測範圍 Y</label><input type="number" id="st-objh" value="300" step="1" oninput="calcStatic()"><span class="unit">mm</span></div>
+    <div class="row"><label>影像重疊率</label><input type="number" id="st-ov" value="10" step="0.5" oninput="calcStatic()"><span class="unit">%</span></div>
+  </div>
+  </div><!-- /#sec-static -->
   <!-- Notes at bottom of left panel -->
   <div style="padding:0 10px 8px">
     <div class="shdr" style="padding-left:2px">📝 備註</div>
@@ -637,6 +658,83 @@ header p{font-size:10px;color:var(--sub);}
 
   </div>
 
+  <!-- Static results pane -->
+  <div id="pane-static-res" style="display:none">
+    <div id="st-vwarn" class="hide" style="display:none;background:color-mix(in srgb,#ff3b30 8%,transparent);border:1px solid color-mix(in srgb,#ff3b30 30%,transparent);border-radius:8px;padding:8px 12px;margin:8px 10px 0;color:#ff3b30;font-size:11px;gap:7px;align-items:flex-start;">⚠️ <span id="st-vwarn-msg"></span></div>
+    <div class="rpt-card">
+      <!-- Header -->
+      <div class="rpt-hdr">
+        <div class="rpt-hdr-left">
+          <div id="st-proj-disp" style="font-size:15px;font-weight:700;color:#fff;padding-bottom:2px;">未命名評估</div>
+          <div class="rpt-sub">AOI 靜態取像系統規格總覽</div>
+        </div>
+        <div class="rpt-date" id="st-rpt-date"></div>
+      </div>
+      <!-- Overview body: 需求 | 架構 | 示意圖 -->
+      <div class="rpt-body">
+        <div class="rpt-col">
+          <div class="rpt-ctitle">📋 需求概覽</div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">設備 / 用途描述</div>
+            <div class="rpt-fval" id="st-desc-disp" style="font-size:11px;color:var(--sub);">—</div>
+          </div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">待測範圍</div>
+            <div class="rpt-fval" id="st-rpt-area">—</div>
+          </div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">目標檢測精度</div>
+            <div class="rpt-row">
+              <input type="number" id="st-target-res" class="rpt-tinput" placeholder="—" step="0.1" oninput="calcStatic()">
+              <span class="rpt-unit">µm</span>
+            </div>
+          </div>
+        </div>
+        <div class="rpt-col">
+          <div class="rpt-ctitle">⚙️ 技術架構</div>
+          <div class="rpt-kv"><span class="rpt-k">相機</span><span class="rpt-v" id="st-rpt-cam">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">鏡頭</span><span class="rpt-v" id="st-rpt-lens">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">光學台數</span><span class="rpt-v" id="st-rpt-qty">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">排列方式</span><span class="rpt-v" id="st-rpt-arr">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">工作距離</span><span class="rpt-v" id="st-rpt-wd">—</span></div>
+        </div>
+        <div class="rpt-col">
+          <div class="rpt-ctitle">📐 系統示意圖</div>
+          <canvas id="st-dg" style="display:block;width:100%;height:116px;"></canvas>
+          <div id="st-dg-caption" style="display:flex;justify-content:center;gap:10px;padding:3px 4px 2px;font-size:9px;line-height:1;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+      <!-- Technical sections -->
+      <div class="res-grid rpt-secs" style="border-top:1px solid var(--border)">
+        <div class="rg-sec">
+          <div class="shdr">🔭 光學規格</div>
+          <div class="cg">
+            <div class="metric"><div class="mt">系統解析度</div><div class="mv"><span id="st-r-or">—</span> <span class="mu">µm/px</span></div></div>
+            <div class="metric"><div class="mt">光學倍率</div><div class="mv"><span id="st-r-mag">—</span> <span class="mu">×</span></div></div>
+            <div class="metric"><div class="mt">水平 FOV / 台</div><div class="mv"><span id="st-r-hf">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric"><div class="mt">垂直 FOV / 台</div><div class="mv"><span id="st-r-vf">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric"><div class="mt">景深 DoF</div><div class="mv"><span id="st-r-df">—</span> <span class="mu">µm</span></div></div>
+            <div class="metric"><div class="mt">工作距離</div><div class="mv"><span id="st-r-wd">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric"><div class="mt">感測器對角</div><div class="mv"><span id="st-r-dg">—</span> <span class="mu">mm</span></div></div>
+          </div>
+          <div id="st-cctv-note" style="display:none;font-size:10px;color:var(--sub);padding:2px 2px 6px;line-height:1.5;">
+            ≈ 標示值為薄透鏡公式估算，CCTV 鏡頭受主平面偏移影響，<br>實際倍率與系統解析度建議以實測為準。
+          </div>
+        </div>
+        <div class="rg-sec">
+          <div class="shdr">📐 配置規格</div>
+          <div class="cg">
+            <div class="metric"><div class="mt">X 方向台數</div><div class="mv"><span id="st-r-nx">—</span> <span class="mu">台</span></div></div>
+            <div class="metric"><div class="mt">Y 方向台數</div><div class="mv"><span id="st-r-ny">—</span> <span class="mu">台</span></div></div>
+            <div class="metric"><div class="mt">光學總台數</div><div class="mv"><span id="st-r-tot">—</span> <span class="mu">台</span></div></div>
+            <div class="metric"><div class="mt">總覆蓋 X</div><div class="mv"><span id="st-r-covx">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric"><div class="mt">總覆蓋 Y</div><div class="mv"><span id="st-r-covy">—</span> <span class="mu">mm</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /rpt-card -->
+  </div><!-- /#pane-static-res -->
+
   <!-- History pane -->
   <div id="pane-hist" style="display:none;overflow-y:auto;flex:1">
     <div style="padding:7px 10px 4px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);">
@@ -756,7 +854,8 @@ const LENS = [];
 // ═══════════════════════════════════════════
 let S = {lineScan:false, color:false, binning:false,
          lensType:'objective',   // 'objective' | 'telecentric' | 'cctv'
-         scanAlongWidth:true, scanMode:'single'};
+         scanAlongWidth:true, scanMode:'single',
+         mode:'scan'};           // 'scan' | 'static'
 let evals    = JSON.parse(localStorage.getItem('aoi_evals')||'[]');
 let custCams = JSON.parse(localStorage.getItem('aoi_cams') ||'[]');
 let custLens = JSON.parse(localStorage.getItem('aoi_lens') ||'[]');
@@ -1016,6 +1115,15 @@ function setLensType(t){
 }
 function setScanDir(w){ S.scanAlongWidth=w; segSet('scan-dir-seg',w?0:1); calc(); }
 function setScanMode(m){ S.scanMode=m; segSet('scan-mode-seg',m==='single'?0:1); calc(); }
+function setMode(m){
+  S.mode=m;
+  segSet('mode-seg', m==='scan'?0:1);
+  document.getElementById('sec-scan').style.display    = m==='scan'   ? '' : 'none';
+  document.getElementById('sec-static').style.display  = m==='static' ? '' : 'none';
+  document.getElementById('pane-res').style.display    = m==='scan'   ? '' : 'none';
+  document.getElementById('pane-static-res').style.display = m==='static' ? '' : 'none';
+  calc();
+}
 
 // ── CCTV aperture stop helpers ──
 const F_STOPS = [1.0, 1.4, 2.0, 2.8, 4.0, 5.6, 8.0, 11, 16, 22, 32];
@@ -1152,6 +1260,191 @@ function calculate(p){
 }
 
 // ═══════════════════════════════════════════
+// STATIC MODE CALCULATION
+// ═══════════════════════════════════════════
+function calculateStatic(p, ss){
+  const r = {};
+  const px = p.binning ? p.pixelSize*2 : p.pixelSize;
+  r.sensorDiag = Math.sqrt(Math.pow(p.rW*p.pixelSize/1000,2)+Math.pow(p.rH*p.pixelSize/1000,2));
+  r.vignetting = p.imageCircle < r.sensorDiag;
+  r.optRes = p.mag>0 ? px/p.mag : 0;    // µm/px
+  const hPx = p.binning?p.rW/2:p.rW, vPx = p.binning?p.rH/2:p.rH;
+  r.hFOV = (r.vignetting||r.optRes===0) ? 0 : r.optRes*hPx/1000;   // mm
+  r.vFOV = (r.vignetting||r.optRes===0) ? 0 : r.optRes*vPx/1000;   // mm
+  // DoF (same formulas as scan mode)
+  if(p.objective&&p.na>0){
+    r.dof=(p.wl/(p.na*p.na*2))/1000;
+  } else if(p.telecentric&&p.fn>0&&p.mag>0){
+    r.dof=2*p.fn*p.pixelSize/p.mag;
+  } else if(p.lensType==='cctv'&&p.fl>0&&p.fn>0&&p.mag>0){
+    const c=p.pixelSize,m=p.mag; r.dof=2*p.fn*c*(1+m)/(m*m);
+  } else { r.dof=0; }
+  // Camera grid layout
+  const ov=ss.overlap/100;
+  const effW=r.hFOV*(1-ov), effH=r.vFOV*(1-ov);
+  if(effW>0&&effH>0&&r.hFOV>0&&r.vFOV>0){
+    r.nX=Math.ceil(ss.objW/effW);
+    r.nY=Math.ceil(ss.objH/effH);
+    // Total coverage = (n-1)*step + FOV
+    r.covX=(r.nX-1)*effW+r.hFOV;
+    r.covY=(r.nY-1)*effH+r.vFOV;
+  } else { r.nX=0; r.nY=0; r.covX=0; r.covY=0; }
+  r.total=r.nX*r.nY;
+  return r;
+}
+
+function calcStatic(){
+  // CCTV: auto-compute magnification
+  if(S.lensType==='cctv'){
+    const fl=+v('p-fl'), wd=+v('p-wd');
+    if(fl>0&&wd>fl) sv('p-mag',(fl/(wd-fl)).toFixed(4));
+  }
+  const p=P();
+  const ss={
+    objW:+document.getElementById('st-objw').value||300,
+    objH:+document.getElementById('st-objh').value||300,
+    overlap:+document.getElementById('st-ov').value||10,
+  };
+  const r=calculateStatic(p,ss);
+  const isCCTV=p.lensType==='cctv';
+  const est=val=>isCCTV?'≈ '+val:val;
+
+  // Vignette warning
+  const stVw=document.getElementById('st-vwarn');
+  if(stVw){
+    if(r.vignetting){
+      stVw.style.display='flex'; stVw.classList.remove('hide');
+      document.getElementById('st-vwarn-msg').textContent=
+        `暗角警告！像圈 ${p.imageCircle.toFixed(1)} mm < 感測器對角線 ${r.sensorDiag.toFixed(2)} mm`;
+    } else { stVw.style.display='none'; }
+  }
+
+  // Optical results
+  const stSet=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  stSet('st-r-or', est(fmt(r.optRes,3)));
+  stSet('st-r-mag', est(fmt(p.mag,4)));
+  stSet('st-r-hf', fmt(r.hFOV,3));
+  stSet('st-r-vf', fmt(r.vFOV,3));
+  stSet('st-r-df', fmt(r.dof,2));
+  stSet('st-r-wd', fmt(p.wd,1));
+  stSet('st-r-dg', fmt(r.sensorDiag,2));
+  // Configuration results
+  stSet('st-r-nx',   r.nX>0?r.nX.toString():'—');
+  stSet('st-r-ny',   r.nY>0?r.nY.toString():'—');
+  stSet('st-r-tot',  r.total>0?r.total.toString():'—');
+  stSet('st-r-covx', fmt(r.covX,2));
+  stSet('st-r-covy', fmt(r.covY,2));
+  // Summary panel
+  const ci=document.getElementById('cam-pick').value;
+  const li=document.getElementById('lens-pick').value;
+  stSet('st-rpt-cam',  ci!==''?allCams()[+ci].n:'手動輸入');
+  stSet('st-rpt-lens', li!==''?allLens()[+li].n:'手動輸入');
+  stSet('st-rpt-qty',  r.total>0?`${r.total} 台`:'—');
+  stSet('st-rpt-arr',  (r.nX>0&&r.nY>0)?`${r.nX} 列 × ${r.nY} 排`:'—');
+  stSet('st-rpt-wd',   fmt(p.wd,1)+' mm');
+  stSet('st-rpt-area', `${ss.objW} × ${ss.objH} mm`);
+  // Header display
+  const projEl=document.getElementById('st-proj-disp');
+  if(projEl) projEl.textContent=document.getElementById('rpt-proj').value||document.getElementById('eval-name').value||'未命名評估';
+  const descEl=document.getElementById('st-desc-disp');
+  if(descEl) descEl.textContent=document.getElementById('rpt-desc').value||'—';
+  const datEl=document.getElementById('st-rpt-date');
+  if(datEl) datEl.textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+  // CCTV note
+  const noteEl=document.getElementById('st-cctv-note');
+  if(noteEl) noteEl.style.display=isCCTV?'':'none';
+  // Traffic light for resolution
+  const targetRes=parseFloat(document.getElementById('st-target-res').value);
+  const orEl=document.getElementById('st-r-or');
+  if(orEl){
+    orEl.classList.remove('over','warn','good');
+    if(!isNaN(targetRes)&&targetRes>0){
+      if(r.optRes>targetRes/2)       orEl.classList.add('over');
+      else if(r.optRes>targetRes/3)  orEl.classList.add('warn');
+      else                           orEl.classList.add('good');
+    }
+  }
+  drawStaticDiagram(ss,r);
+}
+
+function drawStaticDiagram(ss,r){
+  const canvas=document.getElementById('st-dg');
+  if(!canvas) return;
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  if(!W||!H) return;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  const dark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+
+  if(r.nX<=0||r.nY<=0||r.hFOV<=0||r.vFOV<=0){
+    ctx.fillStyle=dark?'#98989d':'#6e6e73';
+    ctx.font='11px -apple-system,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('請輸入有效參數', W/2, H/2);
+    return;
+  }
+  // Draw area: bound by object size
+  const padL=8,padR=8,padT=14,padB=6;
+  const dW=W-padL-padR, dH=H-padT-padB;
+  const scale=Math.min(dW/ss.objW, dH/ss.objH);
+  const rW=ss.objW*scale, rH=ss.objH*scale;
+  const ox=padL+(dW-rW)/2, oy=padT+(dH-rH)/2;
+  // Object background
+  ctx.fillStyle=dark?'rgba(255,255,255,.04)':'rgba(0,0,0,.03)';
+  rrect(ctx,ox,oy,rW,rH,3); ctx.fill();
+  // Clip to object
+  ctx.save(); rrect(ctx,ox,oy,rW,rH,0); ctx.clip();
+  // Camera FOV cells
+  const ov=ss.overlap/100;
+  const effW=r.hFOV*(1-ov), effH=r.vFOV*(1-ov);
+  const fovW=r.hFOV*scale, fovH=r.vFOV*scale;
+  const stepW=effW*scale, stepH=effH*scale;
+  const sat=dark?60:68, lit=dark?42:55;
+  const alpha=ov>0?0.48:0.60;
+  for(let yi=0;yi<r.nY;yi++){
+    for(let xi=0;xi<r.nX;xi++){
+      const idx=yi*r.nX+xi;
+      const hue=(idx*137.508)%360;
+      const x=ox+xi*stepW, y=oy+yi*stepH;
+      ctx.fillStyle=`hsla(${hue},${sat}%,${lit}%,${alpha})`;
+      ctx.fillRect(x,y,fovW,fovH);
+    }
+  }
+  ctx.restore();
+  // Grid lines
+  ctx.strokeStyle=dark?'rgba(255,255,255,.28)':'rgba(0,0,0,.18)';
+  ctx.lineWidth=0.6;
+  for(let xi=0;xi<=r.nX;xi++){
+    const x=ox+xi*(r.covX>0?(rW/r.covX*r.hFOV*(1-ov)):0);
+    // Simpler: draw at camera step positions
+    if(xi>0){
+      const xp=ox+(xi-1)*stepW+fovW;
+      ctx.beginPath(); ctx.moveTo(Math.min(xp,ox+rW),oy); ctx.lineTo(Math.min(xp,ox+rW),oy+rH); ctx.stroke();
+    }
+  }
+  for(let yi=0;yi<=r.nY;yi++){
+    if(yi>0){
+      const yp=oy+(yi-1)*stepH+fovH;
+      ctx.beginPath(); ctx.moveTo(ox,Math.min(yp,oy+rH)); ctx.lineTo(ox+rW,Math.min(yp,oy+rH)); ctx.stroke();
+    }
+  }
+  // Object border
+  ctx.strokeStyle=dark?'rgba(255,255,255,.55)':'rgba(0,0,0,.4)';
+  ctx.lineWidth=1.5;
+  rrect(ctx,ox,oy,rW,rH,3); ctx.stroke();
+  // Caption
+  const cap=document.getElementById('st-dg-caption');
+  if(cap){
+    let h=`<span class="dc-l">${r.total}台 (${r.nX}×${r.nY})</span>`;
+    h+=`<span class="dc-sep">·</span><span class="dc-c">${ss.objW}×${ss.objH}mm</span>`;
+    if(ov>0) h+=`<span class="dc-sep">·</span><span class="dc-r">overlap ${ss.overlap}%</span>`;
+    cap.innerHTML=h;
+  }
+}
+
+// ═══════════════════════════════════════════
 // DIAGRAM
 // ═══════════════════════════════════════════
 function rrect(ctx,x,y,w,h,r){
@@ -1280,6 +1573,7 @@ function drawDiagram(canvasId='dg'){
 function fmt(v,d=2){ return (!isFinite(v)||v===0)?'—':v.toFixed(d); }
 
 function calc(){
+  if(S.mode==='static'){ calcStatic(); return; }
   // CCTV: auto-compute magnification from focal length + working distance
   if(S.lensType==='cctv'){
     const fl=+v('p-fl'), wd=+v('p-wd');
@@ -1734,7 +2028,8 @@ function closeImportModal(){
 // TABS
 // ═══════════════════════════════════════════
 function showTab(t){
-  document.getElementById('pane-res').style.display =t==='res' ?'':'none';
+  document.getElementById('pane-res').style.display        = (t==='res'&&S.mode==='scan')   ?'':'none';
+  document.getElementById('pane-static-res').style.display = (t==='res'&&S.mode==='static') ?'':'none';
   document.getElementById('pane-hist').style.display=t==='hist'?'':'none';
   document.getElementById('pane-db').style.display  =t==='db'  ?'':'none';
   document.getElementById('tab-res').classList.toggle('on', t==='res');
@@ -1777,7 +2072,7 @@ initPickers();
 loadRptMeta();
 initCardCfg();
 calc();
-window.addEventListener('resize', drawDiagram);
+window.addEventListener('resize', ()=>{ drawDiagram(); if(S.mode==='static') calcStatic(); });
 </script>
 
 <!-- ── Undo Toast ── -->
