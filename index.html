@@ -1307,7 +1307,7 @@ function calcStatic(){
   const ss={
     objW:+document.getElementById('st-objw').value||300,
     objH:+document.getElementById('st-objh').value||300,
-    overlap:+document.getElementById('st-ov').value||10,
+    overlap:(s=>s===''?10:+s)(document.getElementById('st-ov').value),
   };
   const r=calculateStatic(p,ss);
   const isCCTV=p.lensType==='cctv';
