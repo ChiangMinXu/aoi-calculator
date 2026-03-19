@@ -140,10 +140,72 @@ header p{font-size:10px;color:var(--sub);}
 .af-row input.wide{flex:1;width:auto;text-align:left;}
 .af-btns{display:flex;gap:6px;margin-top:8px;}
 
+/* ══════════════════════════════════════
+   REPORT / OVERVIEW TAB
+══════════════════════════════════════ */
+#pane-rep{display:flex;flex-direction:column;overflow-y:auto;}
+.rpt-card{margin:8px 10px 4px;border:1px solid var(--border);border-radius:10px;overflow:hidden;flex-shrink:0;}
+.rpt-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+         padding:11px 16px 9px;background:var(--accent);}
+.rpt-hdr-left{flex:1;min-width:0;}
+.rpt-proj{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.45);
+          color:#fff;font-size:15px;font-weight:700;outline:none;padding:0 0 2px;font-family:inherit;}
+.rpt-proj::placeholder{color:rgba(255,255,255,.55);}
+.rpt-sub{font-size:10px;color:rgba(255,255,255,.75);margin-top:4px;}
+.rpt-date{font-size:10px;color:rgba(255,255,255,.7);white-space:nowrap;padding-top:3px;}
+
+.rpt-body{display:grid;grid-template-columns:1fr 1fr 1.5fr;border-bottom:1px solid var(--border);}
+.rpt-col{padding:12px 14px;min-width:0;border-right:1px solid var(--border);}
+.rpt-col:last-child{border-right:none;}
+.rpt-ctitle{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.4px;
+            padding-bottom:8px;margin-bottom:10px;border-bottom:1px solid var(--border);}
+
+/* Needs column */
+.rpt-field{margin-bottom:9px;}
+.rpt-flabel{font-size:9px;color:var(--sub);margin-bottom:3px;}
+.rpt-fval{font-size:13px;font-weight:600;color:var(--text);}
+.rpt-textarea{width:100%;height:54px;background:var(--bg);border:1px solid var(--border);
+              border-radius:5px;color:var(--text);font-size:11px;padding:5px 7px;
+              resize:none;outline:none;font-family:inherit;line-height:1.5;}
+.rpt-row{display:flex;align-items:center;gap:6px;}
+.rpt-tinput{width:68px;padding:3px 7px;background:var(--bg);border:1px solid var(--border);
+            border-radius:5px;color:var(--text);font-size:13px;font-weight:600;
+            outline:none;font-family:inherit;text-align:right;}
+.rpt-unit{font-size:10px;color:var(--sub);}
+
+/* Architecture column */
+.rpt-kv{display:flex;align-items:baseline;gap:6px;margin-bottom:8px;}
+.rpt-k{font-size:9px;color:var(--sub);width:56px;flex-shrink:0;}
+.rpt-v{font-size:12px;font-weight:600;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rpt-tt-kv .rpt-v{font-size:17px;color:var(--accent);}
+.rpt-tt-kv .rpt-unit{font-size:12px;}
+
+/* Diagram column */
+#rpt-dg{display:block;width:100%;height:140px;}
+#rpt-dg-cap{font-size:9px;color:var(--sub);text-align:center;padding:3px 0 0;}
+
+/* Technical detail footer */
+.rpt-footer{padding:10px 14px 12px;}
+.rpt-ftitle{font-size:9px;font-weight:700;color:var(--sub);letter-spacing:.5px;
+            text-transform:uppercase;margin-bottom:7px;}
+.rpt-details{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+.rpt-detail{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;}
+.rpt-dlabel{font-size:9px;color:var(--sub);line-height:1.3;margin-bottom:3px;}
+.rpt-dval{font-size:13px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;}
+.rpt-dunit{font-size:9px;color:var(--sub);font-weight:400;}
+
+/* Actions + history */
+.rpt-actions{padding:6px 10px;display:flex;align-items:center;gap:8px;}
+.rpt-history{padding:0 10px 8px;}
+.rpt-ht{font-size:10px;font-weight:600;color:var(--sub);padding:6px 0 4px;}
+
+/* Print */
 @media print{
-  #app{display:block;height:auto;}
-  #left,#right,header,#tabbar{display:none;}
-  #center{display:block;overflow:visible;}
+  #app{display:block!important;height:auto;}
+  header,#pane-left,#tabbar,#pane-res,#pane-db,.rpt-actions,.rpt-history{display:none!important;}
+  #pane-rep{display:block!important;overflow:visible;}
+  .rpt-card{margin:0;border:none;border-radius:0;}
+  @page{size:29.7cm 16.7cm landscape;margin:8mm;}
 }
 </style>
 </head>
@@ -363,11 +425,91 @@ header p{font-size:10px;color:var(--sub);}
 
   <!-- Reports pane -->
   <div id="pane-rep" style="display:none">
-    <div style="padding:7px 10px;display:flex;align-items:center;gap:8px;">
-      <span style="font-size:12px;color:var(--sub)" id="ev-cnt">0 筆評估</span>
-      <button class="btn-sec" onclick="clearEvals()" style="margin-left:auto;font-size:11px">清除全部</button>
+
+    <!-- ── Report card ── -->
+    <div class="rpt-card">
+
+      <!-- Header -->
+      <div class="rpt-hdr">
+        <div class="rpt-hdr-left">
+          <input id="rpt-proj" class="rpt-proj" placeholder="輸入專案 / 設備名稱…" oninput="saveRptMeta()">
+          <div class="rpt-sub">AOI 系統規格總覽</div>
+        </div>
+        <div class="rpt-date" id="rpt-date"></div>
+      </div>
+
+      <!-- Body: 需求 / 架構 / 示意圖 -->
+      <div class="rpt-body">
+
+        <!-- 需求概覽 -->
+        <div class="rpt-col">
+          <div class="rpt-ctitle">📋 需求概覽</div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">設備 / 用途描述</div>
+            <textarea id="rpt-desc" class="rpt-textarea" placeholder="例：FPD Cell 前段 AOI，檢測短路、斷路、異物…" oninput="saveRptMeta()"></textarea>
+          </div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">樣品尺寸</div>
+            <div class="rpt-fval" id="rpt-sample">—</div>
+          </div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">目標 TT</div>
+            <div class="rpt-row">
+              <input type="number" id="rpt-target-tt" class="rpt-tinput" placeholder="—" oninput="saveRptMeta()">
+              <span class="rpt-unit">min</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 技術架構 -->
+        <div class="rpt-col">
+          <div class="rpt-ctitle">⚙️ 技術架構</div>
+          <div class="rpt-kv"><span class="rpt-k">相機</span><span class="rpt-v" id="rpt-cam">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">鏡頭</span><span class="rpt-v" id="rpt-lens">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">光學數量</span><span class="rpt-v" id="rpt-qty">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">排列方式</span><span class="rpt-v" id="rpt-arr">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">掃描模式</span><span class="rpt-v" id="rpt-mode">—</span></div>
+          <div class="rpt-kv rpt-tt-kv">
+            <span class="rpt-k">估算 TT</span>
+            <span class="rpt-v" id="rpt-tt">—</span>
+            <span class="rpt-unit">min</span>
+          </div>
+        </div>
+
+        <!-- 系統示意圖 -->
+        <div class="rpt-col">
+          <div class="rpt-ctitle">📐 系統示意圖</div>
+          <canvas id="rpt-dg"></canvas>
+          <div id="rpt-dg-cap"></div>
+        </div>
+      </div>
+
+      <!-- Technical detail footer -->
+      <div class="rpt-footer">
+        <div class="rpt-ftitle">技術細節</div>
+        <div class="rpt-details">
+          <div class="rpt-detail"><div class="rpt-dlabel">系統解析度</div><div class="rpt-dval"><span id="rpt-res">—</span> <span class="rpt-dunit">µm/px</span></div></div>
+          <div class="rpt-detail"><div class="rpt-dlabel">水平 FOV／台</div><div class="rpt-dval"><span id="rpt-hfov">—</span> <span class="rpt-dunit">mm</span></div></div>
+          <div class="rpt-detail"><div class="rpt-dlabel">掃描速度</div><div class="rpt-dval"><span id="rpt-spd">—</span> <span class="rpt-dunit">mm/s</span></div></div>
+          <div class="rpt-detail"><div class="rpt-dlabel">不模糊曝光</div><div class="rpt-dval"><span id="rpt-exp">—</span> <span class="rpt-dunit">µs</span></div></div>
+          <div class="rpt-detail"><div class="rpt-dlabel">資料流量</div><div class="rpt-dval"><span id="rpt-dfl2">—</span> <span class="rpt-dunit">GB/s</span></div></div>
+          <div class="rpt-detail"><div class="rpt-dlabel">Encoder 頻率</div><div class="rpt-dval"><span id="rpt-ef">—</span> <span class="rpt-dunit">MHz</span></div></div>
+        </div>
+      </div>
     </div>
-    <div id="ev-list"></div>
+
+    <!-- Actions -->
+    <div class="rpt-actions">
+      <button class="btn-pri" onclick="window.print()">🖨️ 列印 / 匯出 PDF</button>
+      <span style="margin-left:auto;font-size:10px;color:var(--sub)" id="ev-cnt">0 筆評估</span>
+      <button class="btn-sec" onclick="clearEvals()" style="font-size:11px">清除紀錄</button>
+    </div>
+
+    <!-- History list -->
+    <div class="rpt-history">
+      <div class="rpt-ht">歷史評估紀錄</div>
+      <div id="ev-list"></div>
+    </div>
   </div>
 
   <!-- Database pane -->
@@ -714,8 +856,8 @@ function rrect(ctx,x,y,w,h,r){
   ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
 }
 
-function drawDiagram(){
-  const canvas=document.getElementById('dg');
+function drawDiagram(canvasId='dg'){
+  const canvas=document.getElementById(canvasId);
   if(!canvas) return;
   const p=P();
   const dpr=window.devicePixelRatio||1;
@@ -814,8 +956,9 @@ function drawDiagram(){
     ctx.restore();
   }
 
-  // ── Caption: HTML below canvas so text stays compact regardless of sample shape ──
-  const cap = document.getElementById('dg-caption');
+  // ── Caption: HTML below canvas ──
+  const capId = canvasId==='dg' ? 'dg-caption' : 'rpt-dg-cap';
+  const cap = document.getElementById(capId);
   if(cap){
     let h = `<span class="dc-l">${N}台 (${nC}列×${nR}排)</span>`;
     h += `<span class="dc-sep">·</span><span class="dc-c">${sw} × ${sh} mm</span>`;
@@ -867,6 +1010,26 @@ function calc(){
   set('r-ex', fmt(r.nonBlurExp,2));set('r-ef', fmt(r.encFreq,4));
   set('r-pw', fmt(r.minPulseNs,1));set('r-dfl',fmt(r.dataFlow,4));
   drawDiagram();
+
+  // ── Report tab fields ──
+  const ci2=document.getElementById('cam-pick').value;
+  const li2=document.getElementById('lens-pick').value;
+  set('rpt-cam',  ci2!==''?allCams()[+ci2].n:'手動輸入');
+  set('rpt-lens', li2!==''?allLens()[+li2].n:'手動輸入');
+  set('rpt-sample', `${p.sampleW} × ${p.sampleH} mm`);
+  set('rpt-qty',  `${r.totalOpt} 台`);
+  set('rpt-arr',  `${p.nCams} 列 × ${p.nRows} 排`);
+  set('rpt-mode', p.scanMode==='round'?'來回掃描':'單向掃描');
+  set('rpt-tt',   fmt(ttVal, 2));
+  set('rpt-res',  fmt(r.optRes,3));
+  set('rpt-hfov', fmt(r.hFOV,3));
+  set('rpt-spd',  fmt(r.speed,1));
+  set('rpt-exp',  fmt(r.nonBlurExp,2));
+  set('rpt-dfl2', fmt(r.dataFlow,4));
+  set('rpt-ef',   fmt(r.encFreq,4));
+  const datEl=document.getElementById('rpt-date');
+  if(datEl) datEl.textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+  if(document.getElementById('pane-rep').style.display!=='none') drawDiagram('rpt-dg');
 }
 function set(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
 
@@ -968,14 +1131,29 @@ function showTab(t){
   document.getElementById('tab-res').classList.toggle('on',t==='res');
   document.getElementById('tab-rep').classList.toggle('on',t==='rep');
   document.getElementById('tab-db').classList.toggle('on', t==='db');
-  if(t==='rep') renderEvals();
+  if(t==='rep'){ renderEvals(); drawDiagram('rpt-dg'); }
   if(t==='db')  renderDbLists();
+}
+
+function saveRptMeta(){
+  localStorage.setItem('aoi_rpt_meta', JSON.stringify({
+    proj: document.getElementById('rpt-proj').value,
+    desc: document.getElementById('rpt-desc').value,
+    targetTT: document.getElementById('rpt-target-tt').value
+  }));
+}
+function loadRptMeta(){
+  const m = JSON.parse(localStorage.getItem('aoi_rpt_meta')||'{}');
+  if(m.proj)     document.getElementById('rpt-proj').value = m.proj;
+  if(m.desc)     document.getElementById('rpt-desc').value = m.desc;
+  if(m.targetTT) document.getElementById('rpt-target-tt').value = m.targetTT;
 }
 
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 initPickers();
+loadRptMeta();
 calc();
 window.addEventListener('resize', drawDiagram);
 </script>
