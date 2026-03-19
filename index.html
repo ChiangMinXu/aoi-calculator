@@ -521,7 +521,10 @@ header p{font-size:10px;color:var(--sub);}
             <div class="metric"><div class="mt">鏡頭解析度</div><div class="mv"><span id="r-lr">—</span> <span class="mu">µm</span></div></div>
             <div class="metric"><div class="mt">最小檢測解析度</div><div class="mv"><span id="r-mr">—</span> <span class="mu">µm</span></div></div>
             <div class="metric"><div class="mt">景深 DoF</div><div class="mv"><span id="r-df">—</span> <span class="mu">µm</span></div></div>
-            <div class="metric"><div class="mt">光學倍率</div><div class="mv"><span id="r-mag">—</span> <span class="mu">×</span></div></div>
+            <div class="metric"><div class="mt" id="mt-mag">光學倍率</div><div class="mv"><span id="r-mag">—</span> <span class="mu">×</span></div></div>
+          </div>
+          <div id="cctv-est-note" style="display:none;font-size:10px;color:var(--sub);padding:2px 2px 6px;line-height:1.5;">
+            ≈ 標示值為薄透鏡公式估算，CCTV 鏡頭受主平面偏移影響，<br>實際倍率與系統解析度建議以實測為準。
           </div>
         </div>
 
@@ -1227,11 +1230,14 @@ function calc(){
   } else { vw.classList.add('hide'); vw.style.display='none'; }
 
   // Results
-  set('r-or', fmt(r.optRes,3));   set('r-dg', fmt(r.sensorDiag,2));
+  const isCCTV = p.lensType==='cctv';
+  const est = v => isCCTV ? '≈ '+v : v;
+  document.getElementById('cctv-est-note').style.display = isCCTV ? '' : 'none';
+  set('r-or', est(fmt(r.optRes,3)));   set('r-dg', fmt(r.sensorDiag,2));
   set('r-hf', fmt(r.hFOV,3));     set('r-vf', fmt(r.vFOV,3));
   set('r-lr', p.objective?fmt(r.lensRes,3):'—');  set('r-mr', fmt(r.minDetRes,3));
   set('r-df', fmt(r.dof,2));
-  set('r-mag', fmt(p.mag,4));
+  set('r-mag', est(fmt(p.mag,4)));
   set('r-qty',fmt(r.totalOpt,0)); set('r-se', fmt(r.scanEdge,2));
   set('r-sh', fmt(r.shiftEdge,2));set('r-sp', fmt(r.speed,3));
   set('r-cp', fmt(r.capturesPerPass,0)); set('r-ps', fmt(r.passes,0));
