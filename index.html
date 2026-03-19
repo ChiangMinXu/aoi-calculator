@@ -196,6 +196,24 @@ header p{font-size:10px;color:var(--sub);}
 .rpt-history{padding:0 10px 8px;}
 .rpt-ht{font-size:10px;font-weight:600;color:var(--sub);padding:6px 0 4px;}
 
+/* ── Undo Toast ── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);
+  background:var(--text);color:var(--bg);
+  padding:9px 14px 9px 16px;border-radius:10px;
+  font-size:12px;display:flex;align-items:center;gap:12px;
+  opacity:0;transition:opacity .2s,transform .2s;
+  pointer-events:none;z-index:9999;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+#toast-undo{color:var(--accent);cursor:pointer;font-weight:700;font-size:12px;padding:0 2px;}
+#toast-bar{height:2px;background:var(--accent);border-radius:1px;
+           position:absolute;bottom:0;left:0;width:100%;border-radius:0 0 10px 10px;
+           transform-origin:left;animation:none;}
+#toast.show #toast-bar{animation:toast-drain var(--toast-dur,4s) linear forwards;}
+@keyframes toast-drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
 /* Print */
 @media print{
   #app{display:block!important;height:auto;}
@@ -671,11 +689,42 @@ function renderDbLists(){
 function hideBuiltinCam(i){ hiddenCams.add(i); saveHiddenCams(); refreshCamPicker(); renderDbLists(); }
 function hideBuiltinLens(i){ hiddenLens.add(i); saveHiddenLens(); refreshLensPicker(); renderDbLists(); }
 
+// ── Toast / undo engine ──
+let _toastTimer = null;
+const TOAST_DUR = 5000; // ms before permanent delete
+
+function showToast(msg, undoFn){
+  clearTimeout(_toastTimer);
+  const el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  el.style.setProperty('--toast-dur', (TOAST_DUR/1000)+'s');
+  // reset bar animation by toggling show class
+  el.classList.remove('show');
+  void el.offsetWidth; // reflow
+  el.classList.add('show');
+  document.getElementById('toast-undo').onclick = ()=>{
+    clearTimeout(_toastTimer); undoFn(); hideToast();
+  };
+  _toastTimer = setTimeout(hideToast, TOAST_DUR);
+}
+function hideToast(){
+  document.getElementById('toast').classList.remove('show');
+}
+
+// ── Custom entry deletion with undo ──
 function delCustCam(i){
-  custCams.splice(i,1); saveCustCams(); refreshCamPicker(); renderDbLists();
+  const item = custCams.splice(i,1)[0];
+  saveCustCams(); refreshCamPicker(); renderDbLists();
+  showToast(`已刪除「${item.n}」`, ()=>{
+    custCams.splice(i,0,item); saveCustCams(); refreshCamPicker(); renderDbLists();
+  });
 }
 function delCustLens(i){
-  custLens.splice(i,1); saveCustLens(); refreshLensPicker(); renderDbLists();
+  const item = custLens.splice(i,1)[0];
+  saveCustLens(); refreshLensPicker(); renderDbLists();
+  showToast(`已刪除「${item.n}」`, ()=>{
+    custLens.splice(i,0,item); saveCustLens(); refreshLensPicker(); renderDbLists();
+  });
 }
 
 // ── Toggle add forms ──
@@ -1158,5 +1207,12 @@ loadRptMeta();
 calc();
 window.addEventListener('resize', drawDiagram);
 </script>
+
+<!-- ── Undo Toast ── -->
+<div id="toast">
+  <span id="toast-msg"></span>
+  <span id="toast-undo">↩ 復原</span>
+  <div id="toast-bar"></div>
+</div>
 </body>
 </html>
