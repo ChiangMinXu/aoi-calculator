@@ -138,6 +138,8 @@ header p{font-size:10px;color:var(--sub);}
 .db-built{font-size:9px;color:var(--border);flex-shrink:0;}
 .db-del{border:none;background:none;color:rgba(255,59,48,0.65);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0;line-height:1;}
 .db-del:hover{color:#ff3b30;}
+.db-edit{border:none;background:none;color:var(--sub);cursor:pointer;font-size:12px;padding:0 2px;flex-shrink:0;line-height:1;}
+.db-edit:hover{color:var(--accent);}
 .af{padding:8px 12px;border-top:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 4%,var(--surf));}
 .af-row{display:flex;align-items:center;gap:6px;padding:2px 0;}
 .af-row label{font-size:11px;color:var(--sub);flex:1;}
@@ -728,6 +730,7 @@ function renderDbLists(){
     camRows.push(`<div class="db-row">
       <span class="db-name">${c.n}</span>
       <span class="db-tag">${camTag(c)}</span>
+      <button class="db-edit" onclick="editCustCam(${i})" title="編輯">✎</button>
       <button class="db-del" onclick="delCustCam(${i})" title="刪除">✕</button>
     </div>`);
   });
@@ -747,6 +750,7 @@ function renderDbLists(){
     lensRows.push(`<div class="db-row">
       <span class="db-name">${l.n}</span>
       <span class="db-tag">${lensTag(l)}</span>
+      <button class="db-edit" onclick="editCustLens(${i})" title="編輯">✎</button>
       <button class="db-del" onclick="delCustLens(${i})" title="刪除">✕</button>
     </div>`);
   });
@@ -757,6 +761,49 @@ function hideBuiltinCam(i){ hiddenCams.add(i); saveHiddenCams(); refreshCamPicke
 function hideBuiltinLens(i){ hiddenLens.add(i); saveHiddenLens(); refreshLensPicker(); renderDbLists(); }
 
 // ── Toast / undo engine ──
+// ── Edit mode state ──
+let _editCamIdx  = null;  // null = 新增, int = 編輯中的 custCams index
+let _editLensIdx = null;  // null = 新增, int = 編輯中的 custLens index
+
+function editCustCam(i){
+  const c = custCams[i];
+  _editCamIdx = i;
+  document.getElementById('afc-n').value   = c.n;
+  document.getElementById('afc-px').value  = c.px;
+  document.getElementById('afc-rw').value  = c.rw;
+  document.getElementById('afc-rh').value  = c.rh;
+  document.getElementById('afc-fps').value = c.fps;
+  document.getElementById('afc-bit').value = c.bit;
+  document.getElementById('afc-type').value  = c.line  ? 'line'  : 'area';
+  document.getElementById('afc-color').value = c.color ? 'color' : 'gray';
+  document.getElementById('af-cam').style.display = '';
+  document.querySelector('#af-cam .btn-pri').textContent = '確認修改';
+}
+
+function editCustLens(i){
+  const l = custLens[i];
+  _editLensIdx = i;
+  document.getElementById('afl-n').value    = l.n;
+  document.getElementById('afl-type').value = l.type;
+  onAflTypeChange();  // sync visible fields
+  document.getElementById('afl-ic').value   = l.ic;
+  document.getElementById('afl-wd').value   = l.wd;
+  if(l.type==='objective'){
+    document.getElementById('afl-mag').value = l.mag;
+    document.getElementById('afl-na').value  = l.na;
+  } else if(l.type==='telecentric'){
+    document.getElementById('afl-mag').value = l.mag;
+    document.getElementById('afl-fn').value  = l.fn;
+  } else { // cctv
+    document.getElementById('afl-fl').value    = l.fl;
+    document.getElementById('afl-fnmin').value = l.fn_min ?? l.fn ?? 2.8;
+    document.getElementById('afl-fnmax').value = l.fn_max ?? l.fn ?? 22;
+    updateAflMagComputed();
+  }
+  document.getElementById('af-lens').style.display = '';
+  document.querySelector('#af-lens .btn-pri').textContent = '確認修改';
+}
+
 let _toastTimer = null;
 const TOAST_DUR = 5000; // ms before permanent delete
 
@@ -797,14 +844,28 @@ function delCustLens(i){
 // ── Toggle add forms ──
 function toggleAF(type){
   const el=document.getElementById('af-'+type);
-  el.style.display=el.style.display==='none'?'':'none';
+  const opening = el.style.display==='none';
+  el.style.display=opening?'':'none';
+  // Reset edit mode whenever form is closed
+  if(!opening) _resetEditMode(type);
+}
+function _resetEditMode(type){
+  if(type==='cam'){
+    _editCamIdx=null;
+    const btn=document.querySelector('#af-cam .btn-pri');
+    if(btn) btn.textContent='確認新增';
+  } else {
+    _editLensIdx=null;
+    const btn=document.querySelector('#af-lens .btn-pri');
+    if(btn) btn.textContent='確認新增';
+  }
 }
 
-// ── Submit new camera ──
+// ── Submit new / edited camera ──
 function submitAddCam(){
   const n=document.getElementById('afc-n').value.trim();
   if(!n){alert('請輸入相機名稱');return;}
-  custCams.push({
+  const entry={
     n,
     px:  +document.getElementById('afc-px').value,
     rw:  +document.getElementById('afc-rw').value,
@@ -813,17 +874,19 @@ function submitAddCam(){
     bit: +document.getElementById('afc-bit').value,
     line: document.getElementById('afc-type').value==='line',
     color:document.getElementById('afc-color').value==='color',
-  });
+  };
+  if(_editCamIdx!==null){ custCams[_editCamIdx]=entry; }
+  else { custCams.push(entry); }
   saveCustCams(); refreshCamPicker(); renderDbLists();
   toggleAF('cam'); document.getElementById('afc-n').value='';
 }
 
-// ── Submit new lens ──
+// ── Submit new / edited lens ──
 function submitAddLens(){
   const n=document.getElementById('afl-n').value.trim();
   if(!n){alert('請輸入鏡頭名稱');return;}
   const t=document.getElementById('afl-type').value;
-  const lens = {
+  const lens={
     n, type:t,
     ic: +document.getElementById('afl-ic').value,
     wd: +document.getElementById('afl-wd').value,
@@ -838,9 +901,9 @@ function submitAddLens(){
     lens.fl     = +document.getElementById('afl-fl').value;
     lens.fn_min = +document.getElementById('afl-fnmin').value;
     lens.fn_max = +document.getElementById('afl-fnmax').value;
-    // mag auto-computed from fl+wd on use
   }
-  custLens.push(lens);
+  if(_editLensIdx!==null){ custLens[_editLensIdx]=lens; }
+  else { custLens.push(lens); }
   saveCustLens(); refreshLensPicker(); renderDbLists();
   toggleAF('lens'); document.getElementById('afl-n').value='';
 }
