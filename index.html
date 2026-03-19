@@ -230,6 +230,19 @@ header p{font-size:10px;color:var(--sub);}
 #toast.show #toast-bar{animation:toast-drain var(--toast-dur,4s) linear forwards;}
 @keyframes toast-drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 
+
+/* ── Card customization ── */
+.metric{position:relative;}
+.card-dh{display:none;position:absolute;top:3px;left:5px;font-size:14px;color:var(--sub);cursor:grab;line-height:1;user-select:none;}
+.card-vis-btn{display:none;position:absolute;top:2px;right:4px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--sub);padding:0;line-height:1;}
+.card-vis-btn:hover{color:var(--accent);}
+.card-edit-mode .card-dh,.card-edit-mode .card-vis-btn{display:block;}
+.card-edit-mode .metric{cursor:grab;padding-top:17px;}
+.card-edit-mode .metric:active{cursor:grabbing;}
+.metric.card-hidden{opacity:0.28;}
+.metric.dragging{opacity:0.45;outline:2px dashed var(--accent);outline-offset:2px;}
+.metric.drag-target{outline:2px solid var(--accent);outline-offset:2px;}
+
 /* Print */
 @media print{
   #app{display:block!important;height:auto;}
@@ -509,19 +522,19 @@ header p{font-size:10px;color:var(--sub);}
       </div>
 
       <!-- Technical detail sections -->
-      <div class="res-grid rpt-secs">
+      <div style="border-top:1px solid var(--border);padding:5px 10px;display:flex;justify-content:flex-end;"><button id="card-edit-btn" class="btn-sec" style="font-size:10px;padding:2px 9px" onclick="toggleCardEdit()">✎ 自訂版面</button></div><div class="res-grid rpt-secs" id="card-edit-target" style="border-top:none">
 
         <div class="rg-sec">
           <div class="shdr">🔭 光學規格</div>
-          <div class="cg">
-            <div class="metric"><div class="mt">系統解析度</div><div class="mv"><span id="r-or">—</span> <span class="mu">µm/px</span></div></div>
-            <div class="metric"><div class="mt">感測器對角線</div><div class="mv"><span id="r-dg">—</span> <span class="mu">mm</span></div></div>
-            <div class="metric"><div class="mt">水平 FOV / 台</div><div class="mv"><span id="r-hf">—</span> <span class="mu">mm</span></div></div>
-            <div class="metric"><div class="mt">垂直 FOV</div><div class="mv"><span id="r-vf">—</span> <span class="mu">mm</span></div></div>
-            <div class="metric"><div class="mt">鏡頭解析度</div><div class="mv"><span id="r-lr">—</span> <span class="mu">µm</span></div></div>
-            <div class="metric"><div class="mt">最小檢測解析度</div><div class="mv"><span id="r-mr">—</span> <span class="mu">µm</span></div></div>
-            <div class="metric"><div class="mt">景深 DoF</div><div class="mv"><span id="r-df">—</span> <span class="mu">µm</span></div></div>
-            <div class="metric"><div class="mt" id="mt-mag">光學倍率</div><div class="mv"><span id="r-mag">—</span> <span class="mu">×</span></div></div>
+          <div class="cg" data-sec="opt">
+            <div class="metric" data-cid="r-or"><div class="mt">系統解析度</div><div class="mv"><span id="r-or">—</span> <span class="mu">µm/px</span></div></div>
+            <div class="metric" data-cid="r-dg"><div class="mt">感測器對角線</div><div class="mv"><span id="r-dg">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric" data-cid="r-hf"><div class="mt">水平 FOV / 台</div><div class="mv"><span id="r-hf">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric" data-cid="r-vf"><div class="mt">垂直 FOV</div><div class="mv"><span id="r-vf">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric" data-cid="r-lr"><div class="mt">鏡頭解析度</div><div class="mv"><span id="r-lr">—</span> <span class="mu">µm</span></div></div>
+            <div class="metric" data-cid="r-mr"><div class="mt">最小檢測解析度</div><div class="mv"><span id="r-mr">—</span> <span class="mu">µm</span></div></div>
+            <div class="metric" data-cid="r-df"><div class="mt">景深 DoF</div><div class="mv"><span id="r-df">—</span> <span class="mu">µm</span></div></div>
+            <div class="metric" data-cid="r-mag"><div class="mt" id="mt-mag">光學倍率</div><div class="mv"><span id="r-mag">—</span> <span class="mu">×</span></div></div>
           </div>
           <div id="cctv-est-note" style="display:none;font-size:10px;color:var(--sub);padding:2px 2px 6px;line-height:1.5;">
             ≈ 標示值為薄透鏡公式估算，CCTV 鏡頭受主平面偏移影響，<br>實際倍率與系統解析度建議以實測為準。
@@ -530,34 +543,34 @@ header p{font-size:10px;color:var(--sub);}
 
         <div class="rg-sec">
           <div class="shdr">📐 掃描規格</div>
-          <div class="cg">
-            <div class="metric"><div class="mt">光學總數量</div><div class="mv"><span id="r-qty">—</span> <span class="mu">台</span></div></div>
-            <div class="metric"><div class="mt">掃描行程</div><div class="mv"><span id="r-se">—</span> <span class="mu">mm</span></div></div>
-            <div class="metric"><div class="mt">換道行程</div><div class="mv"><span id="r-sh">—</span> <span class="mu">mm</span></div></div>
-            <div class="metric"><div class="mt">掃描速度</div><div class="mv"><span id="r-sp">—</span> <span class="mu">mm/s</span></div></div>
-            <div class="metric"><div class="mt">單道拍攝張數</div><div class="mv"><span id="r-cp">—</span> <span class="mu">張</span></div></div>
-            <div class="metric"><div class="mt">掃描道數</div><div class="mv"><span id="r-ps">—</span> <span class="mu">道</span></div></div>
+          <div class="cg" data-sec="scan">
+            <div class="metric" data-cid="r-qty"><div class="mt">光學總數量</div><div class="mv"><span id="r-qty">—</span> <span class="mu">台</span></div></div>
+            <div class="metric" data-cid="r-se"><div class="mt">掃描行程</div><div class="mv"><span id="r-se">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric" data-cid="r-sh"><div class="mt">換道行程</div><div class="mv"><span id="r-sh">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric" data-cid="r-sp"><div class="mt">掃描速度</div><div class="mv"><span id="r-sp">—</span> <span class="mu">mm/s</span></div></div>
+            <div class="metric" data-cid="r-cp"><div class="mt">單道拍攝張數</div><div class="mv"><span id="r-cp">—</span> <span class="mu">張</span></div></div>
+            <div class="metric" data-cid="r-ps"><div class="mt">掃描道數</div><div class="mv"><span id="r-ps">—</span> <span class="mu">道</span></div></div>
           </div>
         </div>
 
         <div class="rg-sec">
           <div class="shdr">💻 硬體需求</div>
-          <div class="cg cg2">
-            <div class="metric"><div class="mt">不模糊曝光上限</div><div class="mv"><span id="r-ex">—</span> <span class="mu">µs</span></div></div>
-            <div class="metric"><div class="mt">Encoder 頻率</div><div class="mv"><span id="r-ef">—</span> <span class="mu">MHz</span></div></div>
-            <div class="metric"><div class="mt">最小脈衝寬度</div><div class="mv"><span id="r-pw">—</span> <span class="mu">ns</span></div></div>
-            <div class="metric"><div class="mt">資料流量</div><div class="mv"><span id="r-dfl">—</span> <span class="mu">GB/s</span></div></div>
+          <div class="cg cg2" data-sec="hw">
+            <div class="metric" data-cid="r-ex"><div class="mt">不模糊曝光上限</div><div class="mv"><span id="r-ex">—</span> <span class="mu">µs</span></div></div>
+            <div class="metric" data-cid="r-ef"><div class="mt">Encoder 頻率</div><div class="mv"><span id="r-ef">—</span> <span class="mu">MHz</span></div></div>
+            <div class="metric" data-cid="r-pw"><div class="mt">最小脈衝寬度</div><div class="mv"><span id="r-pw">—</span> <span class="mu">ns</span></div></div>
+            <div class="metric" data-cid="r-dfl"><div class="mt">資料流量</div><div class="mv"><span id="r-dfl">—</span> <span class="mu">GB/s</span></div></div>
           </div>
         </div>
 
         <div class="rg-sec">
           <div class="shdr">⏰ 時序分析</div>
-          <div class="cg">
-            <div class="metric"><div class="mt">加減速時間</div><div class="mv"><span id="r-at">—</span> <span class="mu">s/道</span></div></div>
-            <div class="metric"><div class="mt">等速掃描時間</div><div class="mv"><span id="r-cs">—</span> <span class="mu">s/道</span></div></div>
-            <div class="metric"><div class="mt">換道時間</div><div class="mv"><span id="r-ct">—</span> <span class="mu">s</span></div></div>
-            <div class="metric" id="r-rt-card"><div class="mt">單趟返回時間</div><div class="mv"><span id="r-rt">—</span> <span class="mu">s/道</span></div></div>
-            <div class="metric"><div class="mt" id="r-tt-label">掃描週期 TT</div><div class="mv"><span id="r-tt">—</span> <span class="mu">min</span></div></div>
+          <div class="cg" data-sec="timing">
+            <div class="metric" data-cid="r-at"><div class="mt">加減速時間</div><div class="mv"><span id="r-at">—</span> <span class="mu">s/道</span></div></div>
+            <div class="metric" data-cid="r-cs"><div class="mt">等速掃描時間</div><div class="mv"><span id="r-cs">—</span> <span class="mu">s/道</span></div></div>
+            <div class="metric" data-cid="r-ct"><div class="mt">換道時間</div><div class="mv"><span id="r-ct">—</span> <span class="mu">s</span></div></div>
+            <div class="metric" data-cid="r-rt"><div class="mt">單趟返回時間</div><div class="mv"><span id="r-rt">—</span> <span class="mu">s/道</span></div></div>
+            <div class="metric" data-cid="r-tt"><div class="mt" id="r-tt-label">掃描週期 TT</div><div class="mv"><span id="r-tt">—</span> <span class="mu">min</span></div></div>
           </div>
         </div>
 
@@ -1391,6 +1404,152 @@ function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.st
 function exportEval(i){ loadEval(i); setTimeout(()=>window.print(),300); }
 function exportPDF(){ window.print(); }
 
+// ═══════════════════════════════════════════
+// CARD CUSTOMIZATION
+// ═══════════════════════════════════════════
+const CARD_DEFS = [
+  {cid:'r-or',  sec:'opt',    label:'系統解析度'},
+  {cid:'r-dg',  sec:'opt',    label:'感測器對角線'},
+  {cid:'r-hf',  sec:'opt',    label:'水平 FOV / 台'},
+  {cid:'r-vf',  sec:'opt',    label:'垂直 FOV'},
+  {cid:'r-lr',  sec:'opt',    label:'鏡頭解析度'},
+  {cid:'r-mr',  sec:'opt',    label:'最小檢測解析度'},
+  {cid:'r-df',  sec:'opt',    label:'景深 DoF'},
+  {cid:'r-mag', sec:'opt',    label:'光學倍率'},
+  {cid:'r-qty', sec:'scan',   label:'光學總數量'},
+  {cid:'r-se',  sec:'scan',   label:'掃描行程'},
+  {cid:'r-sh',  sec:'scan',   label:'換道行程'},
+  {cid:'r-sp',  sec:'scan',   label:'掃描速度'},
+  {cid:'r-cp',  sec:'scan',   label:'單道拍攝張數'},
+  {cid:'r-ps',  sec:'scan',   label:'掃描道數'},
+  {cid:'r-ex',  sec:'hw',     label:'不模糊曝光上限'},
+  {cid:'r-ef',  sec:'hw',     label:'Encoder 頻率'},
+  {cid:'r-pw',  sec:'hw',     label:'最小脈衝寬度'},
+  {cid:'r-dfl', sec:'hw',     label:'資料流量'},
+  {cid:'r-at',  sec:'timing', label:'加減速時間'},
+  {cid:'r-cs',  sec:'timing', label:'等速掃描時間'},
+  {cid:'r-ct',  sec:'timing', label:'換道時間'},
+  {cid:'r-rt',  sec:'timing', label:'單趟返回時間'},
+  {cid:'r-tt',  sec:'timing', label:'掃描週期 TT'},
+];
+
+let cardCfg = {};
+let _cardEditMode = false;
+let _dragSrc = null;
+
+function initCardCfg(){
+  const saved = JSON.parse(localStorage.getItem('aoi_cardcfg')||'null');
+  if(saved){
+    cardCfg = saved;
+    CARD_DEFS.forEach(({cid,sec})=>{
+      if(!cardCfg[sec]) cardCfg[sec]=[];
+      if(!cardCfg[sec].find(c=>c.cid===cid)) cardCfg[sec].push({cid,visible:true});
+    });
+  } else {
+    cardCfg={};
+    ['opt','scan','hw','timing'].forEach(sec=>{
+      cardCfg[sec]=CARD_DEFS.filter(d=>d.sec===sec).map(({cid})=>({cid,visible:true}));
+    });
+  }
+  injectCardControls();
+  applyCardCfg();
+}
+
+function saveCardCfg(){ localStorage.setItem('aoi_cardcfg',JSON.stringify(cardCfg)); }
+
+function applyCardCfg(){
+  ['opt','scan','hw','timing'].forEach(sec=>{
+    const cg = document.querySelector(`.cg[data-sec="${sec}"]`);
+    if(!cg) return;
+    (cardCfg[sec]||[]).forEach(({cid,visible})=>{
+      const el = cg.querySelector(`[data-cid="${cid}"]`);
+      if(!el) return;
+      if(!_cardEditMode) el.style.display = visible ? '' : 'none';
+      else { el.style.display=''; el.classList.toggle('card-hidden',!visible); }
+      cg.appendChild(el);
+    });
+  });
+}
+
+function updateCfgFromDOM(cg){
+  const sec = cg.dataset.sec;
+  cardCfg[sec] = Array.from(cg.querySelectorAll('[data-cid]')).map(el=>({
+    cid: el.dataset.cid,
+    visible: !el.classList.contains('card-hidden'),
+  }));
+}
+
+function toggleCardEdit(){
+  _cardEditMode = !_cardEditMode;
+  document.getElementById('card-edit-target').classList.toggle('card-edit-mode', _cardEditMode);
+  document.getElementById('card-edit-btn').textContent = _cardEditMode ? '✓ 完成' : '✎ 自訂版面';
+  if(_cardEditMode){
+    ['opt','scan','hw','timing'].forEach(sec=>{
+      const cg = document.querySelector(`.cg[data-sec="${sec}"]`); if(!cg) return;
+      cg.querySelectorAll('[data-cid]').forEach(el=>{
+        el.style.display='';
+        const cfg=(cardCfg[sec]||[]).find(c=>c.cid===el.dataset.cid);
+        el.classList.toggle('card-hidden', cfg?!cfg.visible:false);
+      });
+      (cardCfg[sec]||[]).forEach(({cid})=>{ const el=cg.querySelector(`[data-cid="${cid}"]`); if(el) cg.appendChild(el); });
+    });
+    document.querySelectorAll('.card-vis-btn').forEach(btn=>{
+      btn.textContent = btn.closest('[data-cid]').classList.contains('card-hidden') ? '🙈' : '👁';
+    });
+  } else {
+    ['opt','scan','hw','timing'].forEach(sec=>{
+      const cg=document.querySelector(`.cg[data-sec="${sec}"]`); if(!cg) return;
+      updateCfgFromDOM(cg);
+    });
+    saveCardCfg(); applyCardCfg();
+  }
+}
+
+function toggleCardVis(cid, sec, btn){
+  const el = document.querySelector(`.cg[data-sec="${sec}"] [data-cid="${cid}"]`);
+  if(!el) return;
+  el.classList.toggle('card-hidden');
+  btn.textContent = el.classList.contains('card-hidden') ? '🙈' : '👁';
+}
+
+function onCardDragStart(e,el){ _dragSrc=el; e.dataTransfer.effectAllowed='move'; setTimeout(()=>el.classList.add('dragging'),0); }
+function onCardDragOver(e,el){
+  e.preventDefault(); e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.metric.drag-target').forEach(x=>x.classList.remove('drag-target'));
+  if(_dragSrc&&_dragSrc!==el) el.classList.add('drag-target');
+}
+function onCardDragLeave(el){ el.classList.remove('drag-target'); }
+function onCardDrop(e,el){
+  e.stopPropagation(); el.classList.remove('drag-target');
+  if(!_dragSrc||_dragSrc===el) return;
+  const parent=el.parentNode; if(parent!==_dragSrc.parentNode) return;
+  const after=e.clientY>el.getBoundingClientRect().top+el.getBoundingClientRect().height/2;
+  parent.insertBefore(_dragSrc, after?el.nextSibling:el);
+  updateCfgFromDOM(parent);
+}
+function onCardDragEnd(el){
+  el.classList.remove('dragging');
+  document.querySelectorAll('.metric.drag-target').forEach(x=>x.classList.remove('drag-target'));
+  _dragSrc=null;
+}
+
+function injectCardControls(){
+  document.querySelectorAll('[data-cid]').forEach(el=>{
+    const cid=el.dataset.cid, cg=el.closest('[data-sec]');
+    if(!cg) return;
+    const sec=cg.dataset.sec;
+    const dh=document.createElement('div'); dh.className='card-dh'; dh.textContent='⠿'; el.prepend(dh);
+    const btn=document.createElement('button'); btn.className='card-vis-btn'; btn.textContent='👁';
+    btn.onclick=()=>toggleCardVis(cid,sec,btn); el.appendChild(btn);
+    el.setAttribute('draggable','true');
+    el.addEventListener('dragstart',e=>{ if(_cardEditMode) onCardDragStart(e,el); });
+    el.addEventListener('dragover', e=>{ if(_cardEditMode) onCardDragOver(e,el); });
+    el.addEventListener('dragleave',  ()=>{ if(_cardEditMode) onCardDragLeave(el); });
+    el.addEventListener('drop',     e=>{ if(_cardEditMode) onCardDrop(e,el); });
+    el.addEventListener('dragend',    ()=>onCardDragEnd(el));
+  });
+}
+
 // ── About modal ──
 function toggleAbout(){
   const show = document.getElementById('about-modal').style.display === 'none';
@@ -1536,6 +1695,7 @@ function loadRptMeta(){
 // ═══════════════════════════════════════════
 initPickers();
 loadRptMeta();
+initCardCfg();
 calc();
 window.addEventListener('resize', drawDiagram);
 </script>
