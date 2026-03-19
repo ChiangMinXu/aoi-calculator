@@ -1836,7 +1836,6 @@ const CARD_DEFS = [
 ];
 
 let cardCfg = {};
-let _cardEditMode = false;
 let _dragSrc = null;
 
 function initCardCfg(){
@@ -1866,7 +1865,8 @@ function applyCardCfg(){
     (cardCfg[sec]||[]).forEach(({cid,visible})=>{
       const el = cg.querySelector(`[data-cid="${cid}"]`);
       if(!el) return;
-      if(!_cardEditMode) el.style.display = visible ? '' : 'none';
+      const editOn = _cardEditFlags['scan']||_cardEditFlags['static'];
+      if(!editOn) el.style.display = visible ? '' : 'none';
       else { el.style.display=''; el.classList.toggle('card-hidden',!visible); }
       cg.appendChild(el);
     });
@@ -1881,9 +1881,10 @@ function updateCfgFromDOM(cg){
   }));
 }
 
+const _cardEditFlags = {};   // keyed by flagKey; avoids window[let-var] pitfall
 function _toggleCardEditFor(targetId, btnId, secs, flagKey){
-  window[flagKey] = !window[flagKey];
-  const isOn = window[flagKey];
+  _cardEditFlags[flagKey] = !_cardEditFlags[flagKey];
+  const isOn = _cardEditFlags[flagKey];
   document.getElementById(targetId).classList.toggle('card-edit-mode', isOn);
   document.getElementById(btnId).textContent = isOn ? '✓ 完成' : '✎ 自訂版面';
   if(isOn){
@@ -1908,11 +1909,10 @@ function _toggleCardEditFor(targetId, btnId, secs, flagKey){
   }
 }
 function toggleCardEdit(){
-  _toggleCardEditFor('card-edit-target','card-edit-btn',['opt','scan','hw','timing'],'_cardEditMode');
+  _toggleCardEditFor('card-edit-target','card-edit-btn',['opt','scan','hw','timing'],'scan');
 }
-let _stCardEditMode = false;
 function toggleStCardEdit(){
-  _toggleCardEditFor('st-card-edit-target','st-card-edit-btn',['st-opt','st-cfg'],'_stCardEditMode');
+  _toggleCardEditFor('st-card-edit-target','st-card-edit-btn',['st-opt','st-cfg'],'static');
 }
 
 function toggleCardVis(cid, sec, btn){
@@ -1952,10 +1952,12 @@ function injectCardControls(){
     const btn=document.createElement('button'); btn.className='card-vis-btn'; btn.textContent='👁';
     btn.onclick=()=>toggleCardVis(cid,sec,btn); el.appendChild(btn);
     el.setAttribute('draggable','true');
-    el.addEventListener('dragstart',e=>{ if(_cardEditMode) onCardDragStart(e,el); });
-    el.addEventListener('dragover', e=>{ if(_cardEditMode) onCardDragOver(e,el); });
-    el.addEventListener('dragleave',  ()=>{ if(_cardEditMode) onCardDragLeave(el); });
-    el.addEventListener('drop',     e=>{ if(_cardEditMode) onCardDrop(e,el); });
+    // Use DOM check so drag works for both scan & static edit modes
+    const inEdit=()=>!!el.closest('.card-edit-mode');
+    el.addEventListener('dragstart',e=>{ if(inEdit()) onCardDragStart(e,el); });
+    el.addEventListener('dragover', e=>{ if(inEdit()) onCardDragOver(e,el); });
+    el.addEventListener('dragleave',  ()=>{ if(inEdit()) onCardDragLeave(el); });
+    el.addEventListener('drop',     e=>{ if(inEdit()) onCardDrop(e,el); });
     el.addEventListener('dragend',    ()=>onCardDragEnd(el));
   });
 }
