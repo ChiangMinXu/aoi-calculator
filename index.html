@@ -225,7 +225,7 @@ header p{font-size:10px;color:var(--sub);}
 /* Print */
 @media print{
   #app{display:block!important;height:auto;}
-  header,#left,#tabbar,#pane-db,#pane-hist,.rpt-actions,#vwarn,#about-modal,#about-overlay,#toast{display:none!important;}
+  header,#left,#tabbar,#pane-db,#pane-hist,.rpt-actions,#vwarn,#about-modal,#about-overlay,#imp-modal,#imp-overlay,#toast{display:none!important;}
   #right{padding:0!important;background:transparent!important;}
   #pane-res{display:block!important;overflow:visible;}
   .rpt-card{margin:0;border:none;border-radius:0;box-shadow:none;}
@@ -285,6 +285,21 @@ header p{font-size:10px;color:var(--sub);}
         <a href="mailto:Hwasa.Chung@auo.com" style="font-size:11px;color:var(--accent);text-decoration:none;">Hwasa.Chung@auo.com</a>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ── Import Confirm Modal ── -->
+<div id="imp-overlay" onclick="closeImportModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;backdrop-filter:blur(2px);"></div>
+<div id="imp-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+     background:var(--surf);border:1px solid var(--border);border-radius:14px;
+     padding:22px 24px;z-index:2001;min-width:300px;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+  <div style="font-size:14px;font-weight:700;margin-bottom:4px;">📥 確認匯入</div>
+  <div id="imp-source" style="font-size:11px;color:var(--sub);margin-bottom:14px;"></div>
+  <div id="imp-summary" style="font-size:12px;line-height:1.8;background:var(--surf2);border-radius:8px;padding:10px 12px;margin-bottom:14px;"></div>
+  <div style="font-size:11px;color:var(--sub);margin-bottom:14px;">重複項目（同名）將自動跳過，現有資料不會被覆蓋。</div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <button class="btn-sec" style="font-size:12px" onclick="closeImportModal()">取消</button>
+    <button class="btn-pri" id="imp-confirm-btn" style="font-size:12px">確認匯入</button>
   </div>
 </div>
 
@@ -549,6 +564,19 @@ header p{font-size:10px;color:var(--sub);}
 
   <!-- Database pane -->
   <div id="pane-db" style="display:none">
+
+    <!-- ── Import / Export toolbar ── -->
+    <div style="padding:8px 10px 0">
+      <div class="card" style="margin-bottom:0">
+        <div style="padding:7px 12px;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:var(--sub);flex:1;">資料庫共用</span>
+          <button class="btn-sec" style="font-size:11px" onclick="exportDb()" title="匯出為 JSON 檔案">📤 匯出</button>
+          <button class="btn-sec" style="font-size:11px" onclick="document.getElementById('db-import-input').click()" title="從 JSON 檔案匯入">📥 匯入</button>
+          <input type="file" id="db-import-input" accept=".json" style="display:none" onchange="handleDbImport(this)">
+        </div>
+      </div>
+    </div>
+    <div style="height:8px"></div>
 
     <!-- ── Camera section ── -->
     <div class="shdr">📷 相機資料庫</div>
@@ -1217,6 +1245,101 @@ function toggleAbout(){
   const show = document.getElementById('about-modal').style.display === 'none';
   document.getElementById('about-modal').style.display  = show ? '' : 'none';
   document.getElementById('about-overlay').style.display = show ? '' : 'none';
+}
+
+// ═══════════════════════════════════════════
+// DATABASE EXPORT / IMPORT
+// ═══════════════════════════════════════════
+
+function exportDb(){
+  const payload = {
+    version: 1,
+    exported: new Date().toISOString(),
+    cameras: custCams,
+    lenses:  custLens,
+    hiddenBuiltinCams: [...hiddenCams],
+    hiddenBuiltinLens: [...hiddenLens]
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const date = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'-');
+  a.download = `AOI_Database_${date}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+let _pendingImport = null;
+
+function handleDbImport(input){
+  const file = input.files[0];
+  if(!file) return;
+  input.value = ''; // reset so same file can be re-selected
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(data.version !== 1 || !Array.isArray(data.cameras) || !Array.isArray(data.lenses))
+        throw new Error('格式錯誤');
+
+      // Calculate what will be added vs skipped
+      const existNames = new Set(custCams.map(c=>c.n));
+      const newCams = data.cameras.filter(c=>!existNames.has(c.n));
+      const skipCams = data.cameras.length - newCams.length;
+
+      const existLensNames = new Set(custLens.map(l=>l.n));
+      const newLens = data.lenses.filter(l=>!existLensNames.has(l.n));
+      const skipLens = data.lenses.length - newLens.length;
+
+      const newHiddenCams = (data.hiddenBuiltinCams||[]).filter(i=>!hiddenCams.has(i));
+      const newHiddenLens = (data.hiddenBuiltinLens||[]).filter(i=>!hiddenLens.has(i));
+
+      const exportDate = data.exported ? new Date(data.exported).toLocaleString('zh-TW') : '不明';
+
+      // Build summary
+      let summary = '';
+      summary += `📷 相機：新增 <b>${newCams.length}</b> 台`;
+      if(skipCams) summary += `，跳過 ${skipCams} 筆（重複）`;
+      summary += '<br>';
+      summary += `🔭 鏡頭：新增 <b>${newLens.length}</b> 個`;
+      if(skipLens) summary += `，跳過 ${skipLens} 筆（重複）`;
+      if(newHiddenCams.length || newHiddenLens.length){
+        summary += '<br>';
+        summary += `🙈 同步隱藏的內建項目：相機 ${newHiddenCams.length} 個、鏡頭 ${newHiddenLens.length} 個`;
+      }
+
+      _pendingImport = { newCams, newLens, newHiddenCams, newHiddenLens };
+
+      document.getElementById('imp-source').textContent = `來源：${file.name}　匯出時間：${exportDate}`;
+      document.getElementById('imp-summary').innerHTML = summary;
+      document.getElementById('imp-confirm-btn').onclick = confirmImport;
+      document.getElementById('imp-modal').style.display   = '';
+      document.getElementById('imp-overlay').style.display = '';
+
+    } catch(err) {
+      alert('無法讀取檔案，請確認是否為正確的 AOI 資料庫 JSON 格式。');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function confirmImport(){
+  if(!_pendingImport) return;
+  const { newCams, newLens, newHiddenCams, newHiddenLens } = _pendingImport;
+  newCams.forEach(c => custCams.push(c));
+  newLens.forEach(l => custLens.push(l));
+  newHiddenCams.forEach(i => hiddenCams.add(i));
+  newHiddenLens.forEach(i => hiddenLens.add(i));
+  saveCustCams(); saveCustLens(); saveHiddenCams(); saveHiddenLens();
+  refreshCamPicker(); refreshLensPicker(); renderDbLists();
+  closeImportModal();
+  showToast(`匯入完成：+${newCams.length} 相機、+${newLens.length} 鏡頭`, ()=>{});
+}
+
+function closeImportModal(){
+  document.getElementById('imp-modal').style.display   = 'none';
+  document.getElementById('imp-overlay').style.display = 'none';
+  _pendingImport = null;
 }
 
 // ═══════════════════════════════════════════
