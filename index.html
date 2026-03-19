@@ -187,6 +187,8 @@ header p{font-size:10px;color:var(--sub);}
 .rpt-tt-kv .rpt-v{font-size:17px;color:var(--accent);transition:color .2s;}
 .rpt-tt-kv .rpt-v.over{color:#ff3b30;}
 .metric .mv span.over{color:#ff3b30;font-weight:700;}
+.metric .mv span.warn{color:#ff9500;font-weight:700;}
+.metric .mv span.good{color:#34c759;font-weight:700;}
 .rpt-tt-kv .rpt-unit{font-size:12px;}
 
 /* Diagram column */
@@ -1339,11 +1341,17 @@ function calc(){
   const targetTT = parseFloat(document.getElementById('rpt-target-tt').value);
   if(ttEl) ttEl.classList.toggle('over', !isNaN(targetTT) && targetTT > 0 && ttVal > targetTT);
 
-  // 系統解析度 vs 目標檢測精度
+  // 系統解析度 vs 目標檢測精度（三色燈）
   const targetRes = parseFloat(document.getElementById('rpt-target-res').value);
-  const resOver = !isNaN(targetRes) && targetRes > 0 && r.optRes > targetRes;
   const orEl = document.getElementById('r-or');
-  if(orEl) orEl.classList.toggle('over', resOver);
+  if(orEl){
+    orEl.classList.remove('over','warn','good');
+    if(!isNaN(targetRes) && targetRes > 0){
+      if(r.optRes > targetRes * 2)       orEl.classList.add('over');  // 紅：超過目標2倍
+      else if(r.optRes > targetRes)      orEl.classList.add('warn');  // 黃：超過目標但≤2倍
+      else                               orEl.classList.add('good');  // 綠：符合目標
+    }
+  }
   const datEl=document.getElementById('rpt-date');
   if(datEl) datEl.textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
 }
