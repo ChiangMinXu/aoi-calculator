@@ -823,56 +823,6 @@ function drawDiagram(){
   ctx.fillText(`${sw} × ${sh} mm`, ox+rW/2, oy+rH+3);
 }
 
-  // ── Grid lines ──
-  ctx.strokeStyle='rgba(0,122,255,.55)'; ctx.lineWidth=0.75;
-  const gl=(n,dir)=>{
-    for(let i=0;i<=n;i++){
-      const t=i/n;
-      ctx.beginPath();
-      if(dir==='x'){ ctx.moveTo(ox+t*rW,oy); ctx.lineTo(ox+t*rW,oy+rH); }
-      else          { ctx.moveTo(ox,oy+t*rH); ctx.lineTo(ox+rW,oy+t*rH); }
-      ctx.stroke();
-    }
-  };
-  if(scanW){ gl(nR,'x'); gl(nC,'y'); }
-  else     { gl(nC,'x'); gl(nR,'y'); }
-
-  // ── Scan-direction arrow (above or left of sample) ──
-  ctx.strokeStyle=accent; ctx.fillStyle=accent; ctx.lineWidth=1.2;
-  if(scanW){
-    const ay=oy-6;
-    ctx.beginPath(); ctx.moveTo(ox+4,ay); ctx.lineTo(ox+rW-4,ay); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(ox+rW-4,ay); ctx.lineTo(ox+rW-9,ay-3); ctx.lineTo(ox+rW-9,ay+3); ctx.closePath(); ctx.fill();
-    ctx.font='8px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='bottom';
-    ctx.fillText('掃描方向', ox+rW/2, oy-8);
-  } else {
-    const ax=ox-7;
-    ctx.beginPath(); ctx.moveTo(ax,oy+4); ctx.lineTo(ax,oy+rH-4); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(ax,oy+rH-4); ctx.lineTo(ax-3,oy+rH-9); ctx.lineTo(ax+3,oy+rH-9); ctx.closePath(); ctx.fill();
-  }
-
-  // ── Camera count label (inside top-left) ──
-  ctx.fillStyle=accent; ctx.font='bold 9px -apple-system,sans-serif';
-  ctx.textAlign='left'; ctx.textBaseline='top';
-  ctx.fillText(`${nC*nR}台 (${nC}列×${nR}排)`, ox+3, oy+3);
-
-  // ── Sample dimensions label (below center) ──
-  ctx.fillStyle=sub; ctx.font='9px -apple-system,sans-serif';
-  ctx.textAlign='center'; ctx.textBaseline='top';
-  ctx.fillText(`${sw} × ${sh} mm`, ox+rW/2, oy+rH+3);
-
-  // ── Y label (rotated left) ── only when scan along width
-  if(scanW){
-    ctx.save();
-    ctx.translate(padL-14, oy+rH/2);
-    ctx.rotate(-Math.PI/2);
-    ctx.fillStyle=sub; ctx.font='9px -apple-system,sans-serif';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(`${sh}`, 0, 0);
-    ctx.restore();
-  }
-}
-
 // ═══════════════════════════════════════════
 // MAIN CALC + UI UPDATE
 // ═══════════════════════════════════════════
