@@ -199,9 +199,10 @@ header p{font-size:10px;color:var(--sub);}
 /* Print */
 @media print{
   #app{display:block!important;height:auto;}
-  header,#pane-left,#tabbar,#pane-db,#pane-hist,.rpt-actions,#vwarn{display:none!important;}
+  header,#left,#tabbar,#pane-db,#pane-hist,.rpt-actions,#vwarn{display:none!important;}
+  #right{padding:0!important;background:transparent!important;}
   #pane-res{display:block!important;overflow:visible;}
-  .rpt-card{margin:0;border:none;border-radius:0;}
+  .rpt-card{margin:0;border:none;border-radius:0;box-shadow:none;}
   @page{size:29.7cm 16.7cm landscape;margin:8mm;}
 }
 </style>
@@ -228,7 +229,7 @@ header p{font-size:10px;color:var(--sub);}
     <div class="card" style="margin-bottom:0">
       <div class="row">
         <label>評估名稱</label>
-        <input type="text" id="eval-name" value="新評估">
+        <input type="text" id="eval-name" value="新評估" oninput="syncName(this.value)">
       </div>
     </div>
   </div>
@@ -301,8 +302,8 @@ header p{font-size:10px;color:var(--sub);}
     <div class="row"><label>放大倍率</label><input type="number" id="p-mag" value="5" step="0.1" oninput="calc()"><span class="unit">×</span></div>
     <div class="row"><label>像圈直徑</label><input type="number" id="p-ic" value="25" step="0.5" oninput="calc()"><span class="unit">mm</span></div>
     <div class="row"><label>工作距離</label><input type="number" id="p-wd" value="34" step="1" oninput="calc()"><span class="unit">mm</span></div>
-    <div class="row" id="row-na"><label>NA (數值孔徑)</label><input type="number" id="p-na" value="0.14" step="0.001" oninput="calc()"></div>
-    <div class="row" id="row-fn" style="display:none"><label>F# (光圈)</label><input type="number" id="p-fn" value="8" step="0.1" oninput="calc()"></div>
+    <div class="row" id="row-na"><label>NA (數值孔徑)</label><input type="number" id="p-na" value="0.14" step="0.001" oninput="calc()"><span class="unit"></span></div>
+    <div class="row" id="row-fn" style="display:none"><label>F# (光圈)</label><input type="number" id="p-fn" value="8" step="0.1" oninput="calc()"><span class="unit"></span></div>
     <div class="row" id="row-fl" style="display:none"><label>焦距</label><input type="number" id="p-fl" value="50" step="1" oninput="calc()"><span class="unit">mm</span></div>
     <div class="row"><label>光源波長</label><input type="number" id="p-wl" value="550" step="10" oninput="calc()"><span class="unit">nm</span></div>
   </div>
@@ -331,8 +332,8 @@ header p{font-size:10px;color:var(--sub);}
         <button onclick="setScanMode('round')">來回</button>
       </div>
     </div>
-    <div class="row"><label>每排相機數量</label><input type="number" id="p-nc" value="5" step="1" oninput="calc()"></div>
-    <div class="row"><label>相機排數</label><input type="number" id="p-nr" value="1" step="1" oninput="calc()"></div>
+    <div class="row"><label>每排相機數量</label><input type="number" id="p-nc" value="5" step="1" oninput="calc()"><span class="unit">台</span></div>
+    <div class="row"><label>相機排數</label><input type="number" id="p-nr" value="1" step="1" oninput="calc()"><span class="unit">排</span></div>
     <div class="row"><label>影像重疊率</label><input type="number" id="p-ov" value="6.25" step="0.01" oninput="calc()"><span class="unit">%</span></div>
     <div class="row"><label>加速度</label><input type="number" id="p-ac" value="550" step="10" oninput="calc()"><span class="unit">mm/s²</span></div>
     <div class="row"><label>換道時間</label><input type="number" id="p-ct" value="0.12" step="0.01" oninput="calc()"><span class="unit">s</span></div>
@@ -368,7 +369,7 @@ header p{font-size:10px;color:var(--sub);}
       <!-- Header: project name + date -->
       <div class="rpt-hdr">
         <div class="rpt-hdr-left">
-          <input id="rpt-proj" class="rpt-proj" placeholder="輸入專案 / 設備名稱…" oninput="saveRptMeta()">
+          <input id="rpt-proj" class="rpt-proj" placeholder="輸入專案 / 設備名稱…" oninput="syncName(this.value)">
           <div class="rpt-sub">AOI 系統規格總覽</div>
         </div>
         <div class="rpt-date" id="rpt-date"></div>
@@ -487,8 +488,9 @@ header p{font-size:10px;color:var(--sub);}
     <div class="shdr">📷 相機資料庫</div>
     <div class="card">
       <div id="db-cam-list"></div>
-      <div style="padding:5px 10px">
-        <button class="btn-sec" style="width:100%;font-size:11px" onclick="toggleAF('cam')">＋ 新增相機</button>
+      <div style="padding:5px 10px;display:flex;gap:6px">
+        <button class="btn-sec" style="flex:1;font-size:11px" onclick="toggleAF('cam')">＋ 新增</button>
+        <button class="btn-sec" style="font-size:11px;color:var(--sub)" onclick="hiddenCams.clear();saveHiddenCams();refreshCamPicker();renderDbLists()" title="恢復所有內建相機">↺ 恢復預設</button>
       </div>
       <div id="af-cam" class="af" style="display:none">
         <div class="af-row"><label>名稱</label><input class="wide" type="text" id="afc-n" placeholder="品牌 型號"></div>
@@ -522,8 +524,9 @@ header p{font-size:10px;color:var(--sub);}
     <div class="shdr">🔭 鏡頭資料庫</div>
     <div class="card">
       <div id="db-lens-list"></div>
-      <div style="padding:5px 10px">
-        <button class="btn-sec" style="width:100%;font-size:11px" onclick="toggleAF('lens')">＋ 新增鏡頭</button>
+      <div style="padding:5px 10px;display:flex;gap:6px">
+        <button class="btn-sec" style="flex:1;font-size:11px" onclick="toggleAF('lens')">＋ 新增</button>
+        <button class="btn-sec" style="font-size:11px;color:var(--sub)" onclick="hiddenLens.clear();saveHiddenLens();refreshLensPicker();renderDbLists()" title="恢復所有內建鏡頭">↺ 恢復預設</button>
       </div>
       <div id="af-lens" class="af" style="display:none">
         <div class="af-row"><label>名稱</label><input class="wide" type="text" id="afl-n" placeholder="品牌 型號"></div>
@@ -595,13 +598,17 @@ let S = {lineScan:false, color:false, binning:false,
 let evals    = JSON.parse(localStorage.getItem('aoi_evals')||'[]');
 let custCams = JSON.parse(localStorage.getItem('aoi_cams') ||'[]');
 let custLens = JSON.parse(localStorage.getItem('aoi_lens') ||'[]');
+let hiddenCams = new Set(JSON.parse(localStorage.getItem('aoi_hcams')||'[]'));
+let hiddenLens = new Set(JSON.parse(localStorage.getItem('aoi_hlens')||'[]'));
 let lastR = {};
 
 // ── Combined accessors ──
-function allCams(){ return [...CAMS, ...custCams]; }
-function allLens(){ return [...LENS, ...custLens]; }
+function allCams(){ return CAMS.filter((_,i)=>!hiddenCams.has(i)).concat(custCams); }
+function allLens(){ return LENS.filter((_,i)=>!hiddenLens.has(i)).concat(custLens); }
 function saveCustCams(){ localStorage.setItem('aoi_cams', JSON.stringify(custCams)); }
 function saveCustLens(){ localStorage.setItem('aoi_lens', JSON.stringify(custLens)); }
+function saveHiddenCams(){ localStorage.setItem('aoi_hcams', JSON.stringify([...hiddenCams])); }
+function saveHiddenLens(){ localStorage.setItem('aoi_hlens', JSON.stringify([...hiddenLens])); }
 
 // ── Rebuild pickers after DB changes ──
 function refreshCamPicker(){
@@ -622,28 +629,47 @@ function renderDbLists(){
   const camTag = c => c.line?'線掃描':c.color?'彩色面陣':'面陣';
   const lensTag = l => l.type==='objective'?'物鏡':l.type==='telecentric'?'遠心':'CCTV';
 
-  document.getElementById('db-cam-list').innerHTML = allCams().map((c,i)=>{
-    const cust=i>=CAMS.length;
-    return `<div class="db-row">
+  // Built-in cameras (skip hidden ones, but track original CAMS index)
+  const camRows = [];
+  CAMS.forEach((c,origI)=>{
+    if(hiddenCams.has(origI)) return;
+    camRows.push(`<div class="db-row">
       <span class="db-name">${c.n}</span>
       <span class="db-tag">${camTag(c)}</span>
-      ${cust
-        ? `<button class="db-del" onclick="delCustCam(${i-CAMS.length})" title="刪除">✕</button>`
-        : `<span class="db-built">內建</span>`}
-    </div>`;
-  }).join('') || '<div class="empty">無相機資料</div>';
+      <button class="db-del" onclick="hideBuiltinCam(${origI})" title="刪除">✕</button>
+    </div>`);
+  });
+  custCams.forEach((c,i)=>{
+    camRows.push(`<div class="db-row">
+      <span class="db-name">${c.n}</span>
+      <span class="db-tag">${camTag(c)}</span>
+      <button class="db-del" onclick="delCustCam(${i})" title="刪除">✕</button>
+    </div>`);
+  });
+  document.getElementById('db-cam-list').innerHTML = camRows.join('') || '<div class="empty">無相機資料</div>';
 
-  document.getElementById('db-lens-list').innerHTML = allLens().map((l,i)=>{
-    const cust=i>=LENS.length;
-    return `<div class="db-row">
+  // Built-in lenses (skip hidden ones, track original LENS index)
+  const lensRows = [];
+  LENS.forEach((l,origI)=>{
+    if(hiddenLens.has(origI)) return;
+    lensRows.push(`<div class="db-row">
       <span class="db-name">${l.n}</span>
       <span class="db-tag">${lensTag(l)}</span>
-      ${cust
-        ? `<button class="db-del" onclick="delCustLens(${i-LENS.length})" title="刪除">✕</button>`
-        : `<span class="db-built">內建</span>`}
-    </div>`;
-  }).join('') || '<div class="empty">無鏡頭資料</div>';
+      <button class="db-del" onclick="hideBuiltinLens(${origI})" title="刪除">✕</button>
+    </div>`);
+  });
+  custLens.forEach((l,i)=>{
+    lensRows.push(`<div class="db-row">
+      <span class="db-name">${l.n}</span>
+      <span class="db-tag">${lensTag(l)}</span>
+      <button class="db-del" onclick="delCustLens(${i})" title="刪除">✕</button>
+    </div>`);
+  });
+  document.getElementById('db-lens-list').innerHTML = lensRows.join('') || '<div class="empty">無鏡頭資料</div>';
 }
+
+function hideBuiltinCam(i){ hiddenCams.add(i); saveHiddenCams(); refreshCamPicker(); renderDbLists(); }
+function hideBuiltinLens(i){ hiddenLens.add(i); saveHiddenLens(); refreshLensPicker(); renderDbLists(); }
 
 function delCustCam(i){
   custCams.splice(i,1); saveCustCams(); refreshCamPicker(); renderDbLists();
@@ -1073,7 +1099,7 @@ function loadEval(i){
   sv('p-sw',p.sampleW); sv('p-sh',p.sampleH);
   sv('p-nc',p.nCams); sv('p-nr',p.nRows); sv('p-ov',p.overlap);
   sv('p-ac',p.acc); sv('p-ct',p.changeSlice); sv('p-bs',p.backSpeed); sv('p-ep',p.encPitch);
-  document.getElementById('eval-name').value=e.name;
+  syncName(e.name||'新評估');
   document.getElementById('eval-notes').value=e.notes;
   // Restore camera / lens picker selections
   if(e.camIdx!==undefined) document.getElementById('cam-pick').value=e.camIdx;
@@ -1100,6 +1126,13 @@ function showTab(t){
   if(t==='db')  renderDbLists();
 }
 
+// ── Name sync: eval-name ↔ rpt-proj always stay in sync ──
+function syncName(val){
+  document.getElementById('eval-name').value = val;
+  document.getElementById('rpt-proj').value  = val;
+  saveRptMeta();
+}
+
 function saveRptMeta(){
   localStorage.setItem('aoi_rpt_meta', JSON.stringify({
     proj: document.getElementById('rpt-proj').value,
@@ -1109,7 +1142,10 @@ function saveRptMeta(){
 }
 function loadRptMeta(){
   const m = JSON.parse(localStorage.getItem('aoi_rpt_meta')||'{}');
-  if(m.proj)     document.getElementById('rpt-proj').value = m.proj;
+  if(m.proj){
+    document.getElementById('rpt-proj').value  = m.proj;
+    document.getElementById('eval-name').value = m.proj;
+  }
   if(m.desc)     document.getElementById('rpt-desc').value = m.desc;
   if(m.targetTT) document.getElementById('rpt-target-tt').value = m.targetTT;
 }
