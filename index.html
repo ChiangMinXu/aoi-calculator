@@ -261,6 +261,13 @@ header p{font-size:10px;color:var(--sub);}
         <button onclick="setScanDir(false)">沿高度</button>
       </div>
     </div>
+    <div class="row">
+      <label>掃描模式</label>
+      <div class="seg" id="scan-mode-seg">
+        <button class="on" onclick="setScanMode('single')">單向</button>
+        <button onclick="setScanMode('round')">來回</button>
+      </div>
+    </div>
     <div class="row"><label>每排相機數量</label><input type="number" id="p-nc" value="5" step="1" oninput="calc()"></div>
     <div class="row"><label>相機排數</label><input type="number" id="p-nr" value="1" step="1" oninput="calc()"></div>
     <div class="row"><label>影像重疊率</label><input type="number" id="p-ov" value="6.25" step="0.01" oninput="calc()"><span class="unit">%</span></div>
@@ -330,10 +337,10 @@ header p{font-size:10px;color:var(--sub);}
         <div class="cg">
           <div class="metric"><div class="mt">加減速時間</div><div class="mv"><span id="r-at">—</span> <span class="mu">s/道</span></div></div>
           <div class="metric"><div class="mt">等速掃描時間</div><div class="mv"><span id="r-cs">—</span> <span class="mu">s/道</span></div></div>
-          <div class="metric"><div class="mt">單趟返回時間</div><div class="mv"><span id="r-rt">—</span> <span class="mu">s/道</span></div></div>
           <div class="metric"><div class="mt">換道時間</div><div class="mv"><span id="r-ct">—</span> <span class="mu">s</span></div></div>
-          <div class="metric"><div class="mt">單向掃描 TT</div><div class="mv"><span id="r-st">—</span> <span class="mu">min</span></div></div>
-          <div class="metric"><div class="mt">來回掃描 TT</div><div class="mv"><span id="r-tt">—</span> <span class="mu">min</span></div></div>
+          <div class="metric" id="r-rt-card"><div class="mt">單趟返回時間</div><div class="mv"><span id="r-rt">—</span> <span class="mu">s/道</span></div></div>
+          <div class="metric"><div class="mt">單向 TT（參考）</div><div class="mv"><span id="r-st">—</span> <span class="mu">min</span></div></div>
+          <div class="metric"><div class="mt" id="r-tt-label">掃描週期 TT</div><div class="mv"><span id="r-tt">—</span> <span class="mu">min</span></div></div>
         </div>
       </div>
 
@@ -471,7 +478,7 @@ const LENS = [
 // ═══════════════════════════════════════════
 let S = {lineScan:false, color:false, binning:false,
          lensType:'objective',   // 'objective' | 'telecentric' | 'cctv'
-         scanAlongWidth:true};
+         scanAlongWidth:true, scanMode:'single'};
 let evals    = JSON.parse(localStorage.getItem('aoi_evals')||'[]');
 let custCams = JSON.parse(localStorage.getItem('aoi_cams') ||'[]');
 let custLens = JSON.parse(localStorage.getItem('aoi_lens') ||'[]');
@@ -598,6 +605,7 @@ function setLensType(t){
   calc();
 }
 function setScanDir(w){ S.scanAlongWidth=w; segSet('scan-dir-seg',w?0:1); calc(); }
+function setScanMode(m){ S.scanMode=m; segSet('scan-mode-seg',m==='single'?0:1); calc(); }
 
 // ═══════════════════════════════════════════
 // READ PARAMS
@@ -612,7 +620,7 @@ function P(){
     lensType:S.lensType,
     objective:S.lensType==='objective', telecentric:S.lensType==='telecentric', wl:+v('p-wl'),
     sampleW:+v('p-sw'), sampleH:+v('p-sh'),
-    scanAlongWidth:S.scanAlongWidth,
+    scanAlongWidth:S.scanAlongWidth, scanMode:S.scanMode,
     nCams:+v('p-nc'), nRows:+v('p-nr'), overlap:+v('p-ov'),
     acc:+v('p-ac'), changeSlice:+v('p-ct'),
     backSpeed:+v('p-bs'), encPitch:+v('p-ep'),
@@ -803,24 +811,25 @@ function drawDiagram(){
     ctx.restore();
   }
 
-  // ── Camera count (top-left inside sample) ──
-  ctx.fillStyle=dark?'rgba(255,255,255,.80)':'rgba(0,0,0,.55)';
-  ctx.font='bold 9px -apple-system,sans-serif';
-  ctx.textAlign='left'; ctx.textBaseline='top';
-  ctx.fillText(`${N}台 (${nC}列×${nR}排)`, ox+4, oy+4);
+  // ── Labels below sample rect ──
+  const labelY = oy + rH + 3;
+  ctx.font='9px -apple-system,sans-serif'; ctx.textBaseline='top';
 
-  // ── Overlap hint (top-right, only when overlap > 0) ──
+  // Left: camera count
+  ctx.fillStyle=dark?'rgba(255,255,255,.78)':'rgba(0,0,0,.55)';
+  ctx.textAlign='left';
+  ctx.fillText(`${N}台 (${nC}列×${nR}排)`, ox, labelY);
+
+  // Centre: sample dimensions
+  ctx.fillStyle=sub; ctx.textAlign='center';
+  ctx.fillText(`${sw} × ${sh} mm`, ox+rW/2, labelY);
+
+  // Right: overlap (only when > 0)
   if(ov>0){
     ctx.fillStyle=dark?'rgba(255,255,255,.55)':'rgba(0,0,0,.40)';
-    ctx.font='8px -apple-system,sans-serif';
-    ctx.textAlign='right'; ctx.textBaseline='top';
-    ctx.fillText(`overlap ${p.overlap}%`, ox+rW-4, oy+4);
+    ctx.textAlign='right';
+    ctx.fillText(`overlap ${p.overlap}%`, ox+rW, labelY);
   }
-
-  // ── Sample dimensions (below centre) ──
-  ctx.fillStyle=sub; ctx.font='9px -apple-system,sans-serif';
-  ctx.textAlign='center'; ctx.textBaseline='top';
-  ctx.fillText(`${sw} × ${sh} mm`, ox+rW/2, oy+rH+3);
 }
 
 // ═══════════════════════════════════════════
@@ -854,7 +863,15 @@ function calc(){
   set('r-cp', fmt(r.capturesPerPass,0)); set('r-ps', fmt(r.passes,0));
   set('r-at', fmt(r.accDecTime,3));set('r-cs', fmt(r.constTime,3));
   set('r-rt', fmt(r.returnTime,3));set('r-ct', p.changeSlice.toFixed(3));
-  set('r-st', fmt(r.singleTT,3)); set('r-tt', fmt(r.roundTT,3));
+  set('r-st', fmt(r.singleTT,3));
+  // Dynamic TT based on scan mode
+  const isBi = p.scanMode === 'round';
+  const ttVal = isBi ? r.roundTT : r.singleTT;
+  set('r-tt', fmt(ttVal, 3));
+  const ttLbl = document.getElementById('r-tt-label');
+  if(ttLbl) ttLbl.textContent = isBi ? '來回掃描 TT' : '單向掃描 TT';
+  const rtCard = document.getElementById('r-rt-card');
+  if(rtCard) rtCard.style.opacity = isBi ? '0.35' : '1';
   set('r-ex', fmt(r.nonBlurExp,2));set('r-ef', fmt(r.encFreq,4));
   set('r-pw', fmt(r.minPulseNs,1));set('r-dfl',fmt(r.dataFlow,4));
   drawDiagram();
@@ -942,7 +959,7 @@ function loadEval(i){
   document.getElementById('eval-name').value=e.name;
   document.getElementById('eval-notes').value=e.notes;
   setCamType(p.lineScan); setColor(p.color); setBin(p.binning);
-  setLensType(p.lensType||'objective'); setScanDir(p.scanAlongWidth);
+  setLensType(p.lensType||'objective'); setScanDir(p.scanAlongWidth); setScanMode(p.scanMode||'single');
   calc(); showTab('res');
 }
 function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.stringify(evals)); renderEvals(); }
