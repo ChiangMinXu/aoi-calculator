@@ -584,7 +584,6 @@ header p{font-size:10px;color:var(--sub);}
       <div id="db-cam-list"></div>
       <div style="padding:5px 10px;display:flex;gap:6px">
         <button class="btn-sec" style="flex:1;font-size:11px" onclick="toggleAF('cam')">＋ 新增</button>
-        <button class="btn-sec" style="font-size:11px;color:var(--sub)" onclick="hiddenCams.clear();saveHiddenCams();refreshCamPicker();renderDbLists()" title="恢復所有內建相機">↺ 恢復預設</button>
       </div>
       <div id="af-cam" class="af" style="display:none">
         <div class="af-row"><label>名稱</label><input class="wide" type="text" id="afc-n" placeholder="品牌 型號"></div>
@@ -620,7 +619,6 @@ header p{font-size:10px;color:var(--sub);}
       <div id="db-lens-list"></div>
       <div style="padding:5px 10px;display:flex;gap:6px">
         <button class="btn-sec" style="flex:1;font-size:11px" onclick="toggleAF('lens')">＋ 新增</button>
-        <button class="btn-sec" style="font-size:11px;color:var(--sub)" onclick="hiddenLens.clear();saveHiddenLens();refreshLensPicker();renderDbLists()" title="恢復所有內建鏡頭">↺ 恢復預設</button>
       </div>
       <div id="af-lens" class="af" style="display:none">
         <div class="af-row"><label>名稱</label><input class="wide" type="text" id="afl-n" placeholder="品牌 型號"></div>
@@ -654,34 +652,8 @@ header p{font-size:10px;color:var(--sub);}
 // ═══════════════════════════════════════════
 // DATABASE
 // ═══════════════════════════════════════════
-const CAMS = [
-  {n:"Basler ace2 a2A5120 (25MP)", px:2.5,  rw:5120,rh:5120,fps:125,  bit:8,color:false,line:false},
-  {n:"Basler ace2 a2A3840 (8.3MP)",px:2.74, rw:3840,rh:2160,fps:20,   bit:8,color:false,line:false},
-  {n:"FLIR BFS-U3-200S6M (20MP)",  px:2.4,  rw:5472,rh:3648,fps:17,   bit:8,color:false,line:false},
-  {n:"FLIR BFS-U3-51S5M (5MP)",    px:3.45, rw:2448,rh:2048,fps:75,   bit:8,color:false,line:false},
-  {n:"Hikrobot MV-CA250-10GM",     px:2.5,  rw:5120,rh:5120,fps:10,   bit:8,color:false,line:false},
-  {n:"Hikrobot MV-CA050-10GM",     px:2.2,  rw:2592,rh:1944,fps:10,   bit:8,color:false,line:false},
-  {n:"Teledyne Linea 4K (Line)",   px:7.0,  rw:4096,rh:1,   fps:53000,bit:8,color:false,line:true},
-  {n:"Teledyne Linea 8K (Line)",   px:5.0,  rw:8192,rh:1,   fps:40000,bit:8,color:false,line:true},
-];
-const LENS = [
-  // ── 物鏡 (Objective) ──
-  {n:"Mitutoyo M Plan Apo 2×",  type:'objective',   mag:2,    ic:25, wd:34,  na:0.055,fn:2.8, fl:100},
-  {n:"Mitutoyo M Plan Apo 5×",  type:'objective',   mag:5,    ic:25, wd:34,  na:0.14, fn:2.8, fl:40},
-  {n:"Mitutoyo M Plan Apo 10×", type:'objective',   mag:10,   ic:25, wd:34,  na:0.28, fn:2.8, fl:20},
-  {n:"Mitutoyo M Plan Apo 20×", type:'objective',   mag:20,   ic:25, wd:20,  na:0.42, fn:2.8, fl:10},
-  {n:"Mitutoyo M Plan Apo 50×", type:'objective',   mag:50,   ic:25, wd:13,  na:0.55, fn:2.8, fl:4},
-  // ── 遠心鏡頭 (Telecentric) ──
-  {n:"Opto Eng. TCAR 0.5×",     type:'telecentric', mag:0.5,  ic:22, wd:194, na:0,    fn:8,   fl:0},
-  {n:"Opto Eng. TCAR 1×",       type:'telecentric', mag:1.0,  ic:16, wd:130, na:0,    fn:8,   fl:0},
-  {n:"Opto Eng. TCAR 2×",       type:'telecentric', mag:2.0,  ic:11, wd:104, na:0,    fn:11,  fl:0},
-  {n:"Opto Eng. TC 0.098×",     type:'telecentric', mag:0.098,ic:44, wd:300, na:0,    fn:7.8, fl:0},
-  // ── CCTV 工業鏡頭 ──
-  {n:"Computar M5018-MP2 50mm", type:'cctv',        mag:1,    ic:16, wd:500, na:0,    fn:1.8, fl:50},
-  {n:"Computar M3518-MP2 35mm", type:'cctv',        mag:1,    ic:16, wd:300, na:0,    fn:1.8, fl:35},
-  {n:"Computar M2518-MP2 25mm", type:'cctv',        mag:1,    ic:16, wd:200, na:0,    fn:1.8, fl:25},
-  {n:"Navitar NMV-50M1 50mm",   type:'cctv',        mag:1,    ic:16, wd:400, na:0,    fn:2.8, fl:50},
-];
+const CAMS = [];
+const LENS = [];
 
 // ═══════════════════════════════════════════
 // STATE
