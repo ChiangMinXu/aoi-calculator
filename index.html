@@ -199,7 +199,7 @@ header p{font-size:10px;color:var(--sub);}
 /* Print */
 @media print{
   #app{display:block!important;height:auto;}
-  header,#pane-left,#tabbar,#pane-db,.rpt-actions,.rpt-history,#vwarn{display:none!important;}
+  header,#pane-left,#tabbar,#pane-db,#pane-hist,.rpt-actions,#vwarn{display:none!important;}
   #pane-res{display:block!important;overflow:visible;}
   .rpt-card{margin:0;border:none;border-radius:0;}
   @page{size:29.7cm 16.7cm landscape;margin:8mm;}
@@ -353,7 +353,8 @@ header p{font-size:10px;color:var(--sub);}
 <div class="panel" id="right">
   <div id="tabbar">
     <button class="tb on" onclick="showTab('res')" id="tab-res">📊 總覽</button>
-    <button class="tb" onclick="showTab('db')"  id="tab-db">🗄 資料庫</button>
+    <button class="tb" onclick="showTab('hist')" id="tab-hist">📋 歷史紀錄</button>
+    <button class="tb" onclick="showTab('db')"  id="tab-db">📷 相機鏡頭</button>
   </div>
 
   <!-- Results pane -->
@@ -471,15 +472,16 @@ header p{font-size:10px;color:var(--sub);}
     <!-- Actions -->
     <div class="rpt-actions">
       <button class="btn-pri" onclick="window.print()">💾 存成 PDF</button>
-      <span style="margin-left:auto;font-size:10px;color:var(--sub)" id="ev-cnt">0 筆評估</span>
-      <button class="btn-sec" onclick="clearEvals()" style="font-size:11px">清除紀錄</button>
     </div>
+  </div>
 
-    <!-- History -->
-    <div class="rpt-history">
-      <div class="rpt-ht">歷史評估紀錄</div>
-      <div id="ev-list"></div>
+  <!-- History pane -->
+  <div id="pane-hist" style="display:none;overflow-y:auto;flex:1">
+    <div style="padding:7px 10px 4px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);">
+      <span style="font-size:12px;color:var(--sub)" id="ev-cnt">0 筆評估</span>
+      <button class="btn-sec" onclick="clearEvals()" style="margin-left:auto;font-size:11px">清除全部</button>
     </div>
+    <div id="ev-list"></div>
   </div>
 
   <!-- Database pane -->
@@ -1088,11 +1090,13 @@ function exportPDF(){ window.print(); }
 // TABS
 // ═══════════════════════════════════════════
 function showTab(t){
-  document.getElementById('pane-res').style.display=t==='res'?'':'none';
-  document.getElementById('pane-db').style.display =t==='db' ?'':'none';
-  document.getElementById('tab-res').classList.toggle('on',t==='res');
-  document.getElementById('tab-db').classList.toggle('on', t==='db');
-  if(t==='res') renderEvals();
+  document.getElementById('pane-res').style.display =t==='res' ?'':'none';
+  document.getElementById('pane-hist').style.display=t==='hist'?'':'none';
+  document.getElementById('pane-db').style.display  =t==='db'  ?'':'none';
+  document.getElementById('tab-res').classList.toggle('on', t==='res');
+  document.getElementById('tab-hist').classList.toggle('on',t==='hist');
+  document.getElementById('tab-db').classList.toggle('on',  t==='db');
+  if(t==='hist'||t==='res') renderEvals();
   if(t==='db')  renderDbLists();
 }
 
