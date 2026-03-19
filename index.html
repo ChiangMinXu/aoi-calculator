@@ -243,6 +243,46 @@ header p{font-size:10px;color:var(--sub);}
 .metric.dragging{opacity:0.45;outline:2px dashed var(--accent);outline-offset:2px;}
 .metric.drag-target{outline:2px solid var(--accent);outline-offset:2px;}
 
+/* ── Mobile responsive ── */
+#menu-btn{display:none;background:none;border:none;cursor:pointer;color:var(--text);padding:4px 6px;border-radius:6px;flex-shrink:0;}
+#menu-btn:hover{background:var(--surf2);}
+#drawer-overlay{display:none;position:fixed;inset:44px 0 0 0;background:rgba(0,0,0,.45);z-index:98;-webkit-tap-highlight-color:transparent;}
+@media(max-width:768px){
+  #menu-btn{display:flex;align-items:center;}
+  #app{grid-template-columns:1fr;}
+  #left{
+    position:fixed;top:44px;left:0;width:82%;max-width:310px;
+    height:calc(100vh - 44px);z-index:99;
+    transform:translateX(-100%);transition:transform .25s ease;
+    box-shadow:4px 0 20px rgba(0,0,0,.18);
+  }
+  #left.drawer-open{transform:translateX(0);}
+  #drawer-overlay.show{display:block;}
+  #right{grid-column:1;}
+  header p{display:none;}
+  header h1{font-size:13px;}
+  .btn-sec,.btn-pri{font-size:11px;padding:4px 8px;}
+  .btn-about{padding:4px 5px;}
+  /* Report card: stack to 1 col in portrait */
+  .rpt-body{grid-template-columns:1fr;}
+  .rpt-col{border-right:none;border-bottom:1px solid var(--border);}
+  .rpt-col:last-child{border-bottom:none;}
+  /* Technical sections: 1 col */
+  .res-grid{grid-template-columns:1fr;}
+  /* Metric card grids: 2 col */
+  .cg{grid-template-columns:repeat(2,1fr);}
+  .cg2{grid-template-columns:repeat(2,1fr);}
+  /* Tab bar: scrollable */
+  #tabbar{overflow-x:auto;white-space:nowrap;}
+}
+@media(min-width:540px) and (max-width:768px) and (orientation:landscape){
+  /* Landscape phone: keep rpt-body 2-col, res-grid 2-col */
+  .rpt-body{grid-template-columns:1fr 1fr;}
+  .rpt-col{border-right:1px solid var(--border);border-bottom:none;}
+  .rpt-col:nth-child(2){border-right:none;}
+  .res-grid{grid-template-columns:1fr 1fr;}
+}
+
 /* Print */
 @media print{
   #app{display:block!important;height:auto;}
@@ -259,6 +299,11 @@ header p{font-size:10px;color:var(--sub);}
 
 <!-- ═══════════════════ HEADER ═══════════════════ -->
 <header>
+  <button id="menu-btn" onclick="toggleDrawer()" aria-label="設定">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
   <img src="auo-logo.png" width="28" height="28" style="object-fit:contain;flex-shrink:0;" alt="AUO">
   <div><h1>AOI 光學架構評估計算器</h1><p>Automated Optical Inspection — System Design Tool</p></div>
   <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
@@ -271,6 +316,9 @@ header p{font-size:10px;color:var(--sub);}
     </button>
   </div>
 </header>
+
+<!-- ── Drawer overlay ── -->
+<div id="drawer-overlay" onclick="toggleDrawer()"></div>
 
 <!-- ── About Modal ── -->
 <div id="about-overlay" onclick="toggleAbout()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;backdrop-filter:blur(2px);"></div>
@@ -1551,6 +1599,14 @@ function injectCardControls(){
 }
 
 // ── About modal ──
+function toggleDrawer(){
+  document.getElementById('left').classList.toggle('drawer-open');
+  document.getElementById('drawer-overlay').classList.toggle('show');
+}
+function closeDrawer(){
+  document.getElementById('left').classList.remove('drawer-open');
+  document.getElementById('drawer-overlay').classList.remove('show');
+}
 function toggleAbout(){
   const show = document.getElementById('about-modal').style.display === 'none';
   document.getElementById('about-modal').style.display  = show ? '' : 'none';
