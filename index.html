@@ -302,6 +302,7 @@ header p{font-size:10px;color:var(--sub);}
   body.print-static #pane-res       {display:none!important;}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -1794,13 +1795,20 @@ function loadEval(i){
   calc(); showTab('res');
 }
 function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.stringify(evals)); renderEvals(); }
-function exportEval(i){ loadEval(i); setTimeout(()=>printWithMode('scan'),300); }
-function exportPDF(){  printWithMode(S.mode); }
-function printWithMode(mode){
-  document.body.classList.remove('print-scan','print-static');
-  document.body.classList.add(mode==='static'?'print-static':'print-scan');
-  window.print();
-  setTimeout(()=>document.body.classList.remove('print-scan','print-static'),1000);
+function exportEval(i){ loadEval(i); setTimeout(()=>exportPDFMode('scan'),300); }
+function exportPDF(){ exportPDFMode(S.mode); }
+function exportPDFMode(mode){
+  const paneId = mode==='static' ? 'pane-static-res' : 'pane-res';
+  const el = document.getElementById(paneId).querySelector('.rpt-card');
+  const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
+  const projName = (document.getElementById('rpt-name')||{}).value||'AOI評估';
+  html2pdf().set({
+    margin: 8,
+    filename: `${projName}_${date}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'mm', format: [297, 167], orientation: 'landscape' }
+  }).from(el).save();
 }
 
 // ═══════════════════════════════════════════
