@@ -302,7 +302,8 @@ header p{font-size:10px;color:var(--sub);}
   body.print-static #pane-res       {display:none!important;}
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -1797,18 +1798,32 @@ function loadEval(i){
 function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.stringify(evals)); renderEvals(); }
 function exportEval(i){ loadEval(i); setTimeout(()=>exportPDFMode('scan'),300); }
 function exportPDF(){ exportPDFMode(S.mode); }
-function exportPDFMode(mode){
+async function exportPDFMode(mode){
   const paneId = mode==='static' ? 'pane-static-res' : 'pane-res';
   const el = document.getElementById(paneId).querySelector('.rpt-card');
   const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
   const projName = (document.getElementById('rpt-name')||{}).value||'AOI評估';
-  html2pdf().set({
-    margin: 8,
-    filename: `${projName}_${date}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: [297, 167], orientation: 'landscape' }
-  }).from(el).save();
+
+  const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false });
+  const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+  const pageW = 297, pageH = 210, margin = 8;
+  const availW = pageW - margin * 2;
+  const availH = pageH - margin * 2;
+  const ratio = canvas.width / canvas.height;
+  let finalW, finalH;
+  if (ratio > availW / availH) {
+    finalW = availW; finalH = availW / ratio;
+  } else {
+    finalH = availH; finalW = availH * ratio;
+  }
+  const x = margin + (availW - finalW) / 2;
+  const y = margin + (availH - finalH) / 2;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: 'mm', format: [pageW, pageH], orientation: 'landscape' });
+  pdf.addImage(imgData, 'JPEG', x, y, finalW, finalH);
+  pdf.save(`${projName}_${date}.pdf`);
 }
 
 // ═══════════════════════════════════════════
