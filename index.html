@@ -636,6 +636,8 @@ header p{font-size:10px;color:var(--sub);}
             <div class="metric" data-cid="r-sp"><div class="mt">掃描速度</div><div class="mv"><span id="r-sp">—</span> <span class="mu">mm/s</span></div></div>
             <div class="metric" data-cid="r-cp"><div class="mt">單道拍攝張數</div><div class="mv"><span id="r-cp">—</span> <span class="mu">張</span></div></div>
             <div class="metric" data-cid="r-ps"><div class="mt">掃描道數</div><div class="mv"><span id="r-ps">—</span> <span class="mu">道</span></div></div>
+            <div class="metric" data-cid="r-rp"><div class="mt">單排鏡組 Pitch</div><div class="mv"><span id="r-rp">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric" data-cid="r-fbp"><div class="mt">前後排鏡組 Pitch</div><div class="mv"><span id="r-fbp">—</span> <span class="mu">mm</span></div></div>
           </div>
         </div>
 
@@ -1214,7 +1216,8 @@ function calculate(p){
   const shiftET = p.scanAlongWidth ? p.sampleH : p.sampleW;
   r.scanEdge  = scanET / p.nRows;
   r.shiftEdge = shiftET;
-  r.rowPitch  = shiftET / p.nCams;
+  r.rowPitch       = shiftET / p.nCams;
+  r.frontBackPitch = p.nRows > 1 ? r.scanEdge : 0;
   r.totalOpt  = p.nCams * p.nRows;
 
   r.fovShift  = r.hFOV;
@@ -1637,6 +1640,7 @@ function calc(){
   set('r-qty',fmt(r.totalOpt,0)); set('r-se', fmt(r.scanEdge,2));
   set('r-sh', fmt(r.shiftEdge,2));set('r-sp', fmt(r.speed,3));
   set('r-cp', fmt(r.capturesPerPass,0)); set('r-ps', fmt(r.passes,0));
+  set('r-rp', fmt(r.rowPitch,2)); set('r-fbp', r.frontBackPitch>0 ? fmt(r.frontBackPitch,2) : '—');
   set('r-at', fmt(r.accDecTime,3));set('r-cs', fmt(r.constTime,3));
   set('r-rt', fmt(r.returnTime,3));set('r-ct', p.changeSlice.toFixed(3));
   set('r-st', fmt(r.singleTT,3));
