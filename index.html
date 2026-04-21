@@ -250,6 +250,11 @@ header p{font-size:10px;color:var(--sub);}
 #menu-btn{display:none;background:none;border:none;cursor:pointer;color:var(--text);padding:4px 6px;border-radius:6px;flex-shrink:0;}
 #menu-btn:hover{background:var(--surf2);}
 #drawer-overlay{display:none;position:fixed;inset:44px 0 0 0;background:rgba(0,0,0,.45);z-index:98;-webkit-tap-highlight-color:transparent;}
+/* Mobile bottom bar */
+#mobile-bar{display:none;}
+/* Mode button label variants */
+.ms{display:none;}
+
 @media(max-width:768px){
   #menu-btn{display:flex;align-items:center;}
   #app{grid-template-columns:1fr;}
@@ -261,12 +266,24 @@ header p{font-size:10px;color:var(--sub);}
   }
   #left.drawer-open{transform:translateX(0);}
   #drawer-overlay.show{display:block;}
-  #right{grid-column:1;}
-  header p{display:none;}
-  header h1{font-size:13px;}
-  .btn-sec,.btn-pri{font-size:11px;padding:4px 8px;}
-  #mode-seg button{padding:3px 7px;font-size:10px;}
+  #right{grid-column:1; padding-bottom:56px;}
+  /* Header: 隱藏標題與桌面版按鈕，只留 logo + mode switcher + about */
+  #hdr-title{display:none;}
+  .hdr-action{display:none;}
   .btn-about{padding:4px 5px;}
+  /* Mode 按鈕改短標 */
+  .ml{display:none;}
+  .ms{display:inline;}
+  #mode-seg button{padding:4px 10px;font-size:11px;}
+  /* Bottom action bar */
+  #mobile-bar{
+    display:flex;gap:8px;
+    position:fixed;bottom:0;left:0;right:0;
+    padding:8px 12px;padding-bottom:calc(8px + env(safe-area-inset-bottom));
+    background:var(--surf);border-top:1px solid var(--border);
+    z-index:97;
+  }
+  #mobile-bar .btn-sec,#mobile-bar .btn-pri{font-size:12px;padding:7px 0;}
   /* Report card: stack to 1 col in portrait */
   .rpt-body{grid-template-columns:1fr;}
   .rpt-col{border-right:none;border-bottom:1px solid var(--border);}
@@ -316,15 +333,15 @@ header p{font-size:10px;color:var(--sub);}
     </svg>
   </button>
   <img src="auo-logo.png" width="28" height="28" style="object-fit:contain;flex-shrink:0;" alt="AUO">
-  <div><h1>AOI 光學架構評估計算器</h1><p>Automated Optical Inspection — System Design Tool</p></div>
+  <div id="hdr-title"><h1>AOI 光學架構評估計算器</h1><p>Automated Optical Inspection — System Design Tool</p></div>
   <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
     <div class="seg" id="mode-seg" style="flex-shrink:0;font-size:11px;">
-      <button class="on" onclick="setMode('scan')">掃描取像</button>
-      <button onclick="setMode('static')">靜態取像</button>
-      <button onclick="setMode('area')">Area 取像</button>
+      <button class="on" onclick="setMode('scan')"><span class="ml">掃描取像</span><span class="ms">掃描</span></button>
+      <button onclick="setMode('static')"><span class="ml">靜態取像</span><span class="ms">靜態</span></button>
+      <button onclick="setMode('area')"><span class="ml">Area 取像</span><span class="ms">Area</span></button>
     </div>
-    <button class="btn-sec" onclick="exportPDF()">📄 匯出 PDF</button>
-    <button class="btn-pri" onclick="saveEval()">💾 儲存評估</button>
+    <button class="btn-sec hdr-action" onclick="exportPDF()">📄 匯出 PDF</button>
+    <button class="btn-pri hdr-action" onclick="saveEval()">💾 儲存評估</button>
     <button class="btn-about" onclick="toggleAbout()" title="開發者資訊">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
@@ -335,6 +352,12 @@ header p{font-size:10px;color:var(--sub);}
 
 <!-- ── Drawer overlay ── -->
 <div id="drawer-overlay" onclick="toggleDrawer()"></div>
+
+<!-- ── Mobile bottom action bar ── -->
+<div id="mobile-bar">
+  <button class="btn-sec" style="flex:1" onclick="exportPDF()">📄 匯出 PDF</button>
+  <button class="btn-pri" style="flex:1" onclick="saveEval()">💾 儲存評估</button>
+</div>
 
 <!-- ── About Modal ── -->
 <div id="about-overlay" onclick="toggleAbout()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;backdrop-filter:blur(2px);"></div>
