@@ -549,37 +549,74 @@ header p{font-size:10px;color:var(--sub);}
 
   <!-- ── Area section (hidden unless area mode) ── -->
   <div id="sec-area" style="display:none">
-  <div class="shdr">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <rect x="2" y="2" width="20" height="20" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/>
-    </svg>產品規格
-  </div>
-  <div class="card">
-    <div class="row"><label>面板 X-AA</label><input type="number" id="ar-xaa" value="300" step="1" oninput="calcArea()"><span class="unit">mm</span></div>
-    <div class="row"><label>面板 Y-AA</label><input type="number" id="ar-yaa" value="200" step="1" oninput="calcArea()"><span class="unit">mm</span></div>
-    <div class="row"><label>面板 X 解析度</label><input type="number" id="ar-xres" value="3840" step="1" oninput="calcArea()"><span class="unit">px</span></div>
-    <div class="row"><label>面板 Y 解析度</label><input type="number" id="ar-yres" value="2160" step="1" oninput="calcArea()"><span class="unit">px</span></div>
-    <div class="row"><label>Pixel Pitch</label><input type="number" id="ar-pitch" value="78" step="1" oninput="calcArea()"><span class="unit">µm</span></div>
-  </div>
-  <div class="shdr">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 4 0v2"/>
-    </svg>相機設定
-  </div>
-  <div class="card">
-    <div class="row"><label>X 解析度</label><input type="number" id="ar-cx" value="2448" step="1" oninput="calcArea()"><span class="unit">px</span></div>
-    <div class="row"><label>Y 解析度</label><input type="number" id="ar-cy" value="2048" step="1" oninput="calcArea()"><span class="unit">px</span></div>
-    <div class="row"><label>像素大小</label><input type="number" id="ar-pix" value="3.45" step="0.01" oninput="calcArea()"><span class="unit">µm</span></div>
-  </div>
-  <div class="shdr">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>
-    </svg>鏡頭設定
-  </div>
-  <div class="card">
-    <div class="row"><label>焦距</label><input type="number" id="ar-fl" value="50" step="1" oninput="calcArea()"><span class="unit">mm</span></div>
-    <div class="row"><label>最短工作距離</label><input type="number" id="ar-minwd" value="200" step="1" oninput="calcArea()"><span class="unit">mm</span></div>
-  </div>
+    <div style="padding:8px 10px 0">
+      <div class="card" style="margin-bottom:0">
+        <div class="row">
+          <label>評估名稱</label>
+          <input type="text" id="as-eval-name" value="新評估" oninput="syncNameAS(this.value)">
+        </div>
+      </div>
+    </div>
+    <div class="shdr">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+      </svg>產品規格
+    </div>
+    <div class="card">
+      <div class="row"><label>面板 X-AA</label><input type="number" id="as-panel-x" value="1884" step="1" oninput="calcAS()"><span class="unit">mm</span></div>
+      <div class="row"><label>面板 Y-AA</label><input type="number" id="as-panel-y" value="1070" step="1" oninput="calcAS()"><span class="unit">mm</span></div>
+      <div class="row"><label>面板 X 解析度</label><input type="number" id="as-panel-rx" value="3840" step="1" oninput="calcAS()"><span class="unit">px</span></div>
+      <div class="row"><label>面板 Y 解析度</label><input type="number" id="as-panel-ry" value="2160" step="1" oninput="calcAS()"><span class="unit">px</span></div>
+      <div class="row"><label>Pitch</label><input type="number" id="as-pitch" value="8" step="1" oninput="calcAS()"><span class="unit">px</span></div>
+    </div>
+    <div class="shdr">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>相機設定
+    </div>
+    <div class="card">
+      <div class="dbrow">
+        <label>資料庫</label>
+        <select id="as-cam-pick" onchange="applyCameraAS()">
+          <option value="">— 手動輸入 —</option>
+        </select>
+      </div>
+      <div class="row"><label>X 解析度</label><input type="number" id="as-cam-rx" value="14192" step="1" oninput="calcAS()"><span class="unit">px</span></div>
+      <div class="row"><label>Y 解析度</label><input type="number" id="as-cam-ry" value="10640" step="1" oninput="calcAS()"><span class="unit">px</span></div>
+      <div class="row"><label>像素大小</label><input type="number" id="as-cam-px" value="3.76" step="0.01" oninput="calcAS()"><span class="unit">µm</span></div>
+    </div>
+    <div class="shdr">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+      </svg>鏡頭設定
+    </div>
+    <div class="card">
+      <div class="dbrow">
+        <label>資料庫</label>
+        <select id="as-lens-pick" onchange="applyLensAS()">
+          <option value="">— 手動輸入 —</option>
+        </select>
+      </div>
+      <div class="row"><label>焦距</label><input type="number" id="as-fl" value="55" step="1" oninput="calcAS()"><span class="unit">mm</span></div>
+      <div class="row"><label>最短工作距離</label><input type="number" id="as-min-wd" value="100" step="1" oninput="calcAS()"><span class="unit">mm</span></div>
+    </div>
+    <div class="shdr">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      </svg>配置設定
+    </div>
+    <div class="card">
+      <div class="row"><label>單台佔屏比限制</label><input type="number" id="as-limit" value="0.8" step="0.05" oninput="calcAS()"><span class="unit">×</span></div>
+    </div>
+    <div style="padding:0 10px 8px">
+      <div class="shdr" style="padding-left:2px">📝 備註</div>
+      <textarea id="as-eval-notes" placeholder="輸入備註..."
+        style="width:100%;height:48px;padding:6px 8px;font-size:12px;border:1px solid var(--border);
+               border-radius:var(--rad);background:var(--surf);color:var(--text);resize:none;outline:none;"></textarea>
+    </div>
+    <div style="height:14px"></div>
   </div><!-- /#sec-area -->
 
   <!-- Notes at bottom of left panel -->
@@ -808,46 +845,80 @@ header p{font-size:10px;color:var(--sub);}
     </div><!-- /rpt-card -->
   </div><!-- /#pane-static-res -->
 
-  <!-- Area Mode pane -->
+  <!-- ══ Area Shot Results pane ══ -->
   <div id="pane-area-res" style="display:none">
+    <div id="as-vwarn" class="hide">⚠️ <span id="as-vwarn-msg"></span></div>
     <div class="rpt-card">
       <div class="rpt-hdr">
         <div class="rpt-hdr-left">
-          <input id="ar-rpt-name" class="rpt-proj" placeholder="輸入專案 / 設備名稱…" oninput="syncName(this.value)">
-          <div class="rpt-sub">AOI Area 取像規格總覽</div>
+          <input id="as-rpt-proj" class="rpt-proj" placeholder="輸入專案 / 設備名稱…" oninput="syncNameAS(this.value)">
+          <div class="rpt-sub">AOI Area Shot 評估總覽</div>
         </div>
-        <div class="rpt-date" id="ar-rpt-date"></div>
+        <div class="rpt-date" id="as-rpt-date"></div>
       </div>
-
-      <div class="rpt-body" style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
-        <!-- 光學規格 -->
+      <div class="rpt-body">
         <div class="rpt-col">
-          <div class="rpt-ctitle">🔭 光學規格</div>
-          <div class="rpt-kv"><span class="rk">系統解析能</span><span class="rv"><span id="ar-sysres">—</span> <span class="mu">µm/px</span></span></div>
-          <div class="rpt-kv"><span class="rk">光學倍率</span><span class="rv"><span id="ar-mag">—</span> <span class="mu">×</span></span></div>
-          <div class="rpt-kv"><span class="rk">X-FOV</span><span class="rv"><span id="ar-xfov">—</span> <span class="mu">mm</span></span></div>
-          <div class="rpt-kv"><span class="rk">Y-FOV</span><span class="rv"><span id="ar-yfov">—</span> <span class="mu">mm</span></span></div>
-          <div class="rpt-kv"><span class="rk">工作距離 WD</span><span class="rv"><span id="ar-wd">—</span> <span class="mu">mm</span></span></div>
-          <div class="rpt-kv"><span class="rk">安全距離檢查</span><span class="rv"><span id="ar-wdcheck">—</span></span></div>
-          <div class="rpt-kv"><span class="rk">X 半角</span><span class="rv"><span id="ar-xang">—</span> <span class="mu">°</span></span></div>
-          <div class="rpt-kv"><span class="rk">Y 半角</span><span class="rv"><span id="ar-yang">—</span> <span class="mu">°</span></span></div>
+          <div class="rpt-ctitle">📋 需求概覽</div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">設備 / 用途描述</div>
+            <textarea id="as-rpt-desc" class="rpt-textarea" placeholder="例：FPD Cell 前段 AOI，畫檢評估…"></textarea>
+          </div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">面板尺寸</div>
+            <div class="rpt-fval" id="as-rpt-panel">—</div>
+          </div>
+          <div class="rpt-field">
+            <div class="rpt-flabel">Pitch</div>
+            <div class="rpt-fval" id="as-rpt-pitch">—</div>
+          </div>
         </div>
-        <!-- 配置規格 -->
         <div class="rpt-col">
-          <div class="rpt-ctitle">📐 配置規格</div>
-          <div class="rpt-kv"><span class="rk">X 方向台數</span><span class="rv"><span id="ar-nx">—</span> <span class="mu">台</span></span></div>
-          <div class="rpt-kv"><span class="rk">Y 方向台數</span><span class="rv"><span id="ar-ny">—</span> <span class="mu">台</span></span></div>
-          <div class="rpt-kv"><span class="rk">總台數</span><span class="rv"><span id="ar-total">—</span> <span class="mu">台</span></span></div>
-          <div class="rpt-kv"><span class="rk">單台 X 佔屏比</span><span class="rv"><span id="ar-xcov">—</span> <span class="mu">%</span></span></div>
-          <div class="rpt-kv"><span class="rk">單台 Y 佔屏比</span><span class="rv"><span id="ar-ycov">—</span> <span class="mu">%</span></span></div>
-          <div class="rpt-kv"><span class="rk">Pitch 採樣比</span><span class="rv"><span id="ar-pitchcheck">—</span> <span class="mu">px/pitch</span></span></div>
+          <div class="rpt-ctitle">⚙️ 技術架構</div>
+          <div class="rpt-kv"><span class="rpt-k">相機</span><span class="rpt-v" id="as-rpt-cam">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">鏡頭</span><span class="rpt-v" id="as-rpt-lens">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">總相機數</span><span class="rpt-v" id="as-rpt-qty">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">配置方式</span><span class="rpt-v" id="as-rpt-arr">—</span></div>
+          <div class="rpt-kv"><span class="rpt-k">WD 可用</span><span class="rpt-v" id="as-rpt-wd-ok">—</span></div>
+        </div>
+        <div class="rpt-col">
+          <div class="rpt-ctitle">📐 配置示意圖</div>
+          <canvas id="as-dg" style="display:block;width:100%;height:116px;"></canvas>
+          <div id="as-dg-caption" style="display:flex;justify-content:center;gap:10px;padding:3px 4px 2px;font-size:9px;line-height:1;flex-wrap:wrap;"></div>
         </div>
       </div>
-
-      <!-- Diagram -->
-      <div style="padding:10px 14px 12px;border-top:1px solid var(--border);">
-        <div class="rpt-ctitle" style="margin-bottom:8px;">📷 相機配置示意圖</div>
-        <canvas id="ar-dg" width="600" height="180" style="width:100%;height:auto;border-radius:6px;background:var(--surf2);"></canvas>
+      <div class="res-grid rpt-secs" style="border-top:1px solid var(--border)">
+        <div class="rg-sec">
+          <div class="shdr">🔭 光學規格</div>
+          <div class="cg">
+            <div class="metric"><div class="mt">系統解析能</div><div class="mv"><span id="as-r-res">—</span> <span class="mu">µm</span></div></div>
+            <div class="metric"><div class="mt">X-FOV</div><div class="mv"><span id="as-r-xfov">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric"><div class="mt">Y-FOV</div><div class="mv"><span id="as-r-yfov">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric"><div class="mt">工作距離 WD</div><div class="mv"><span id="as-r-wd">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric"><div class="mt">安全工作距離</div><div class="mv"><span id="as-r-safe-wd">—</span> <span class="mu">mm</span></div></div>
+            <div class="metric"><div class="mt">X 半角</div><div class="mv"><span id="as-r-xangle">—</span> <span class="mu">°</span></div></div>
+          </div>
+        </div>
+        <div class="rg-sec">
+          <div class="shdr">📊 單台評估</div>
+          <div class="cg">
+            <div class="metric"><div class="mt">X 佔屏比</div><div class="mv"><span id="as-r-xratio">—</span></div></div>
+            <div class="metric"><div class="mt">Y 佔屏比</div><div class="mv"><span id="as-r-yratio">—</span></div></div>
+            <div class="metric"><div class="mt">Pitch 檢查</div><div class="mv"><span id="as-r-pitch-ok">—</span></div></div>
+            <div class="metric"><div class="mt">1台 &lt; 80%</div><div class="mv"><span id="as-r-check1">—</span></div></div>
+            <div class="metric"><div class="mt">2台 &lt; 160%</div><div class="mv"><span id="as-r-check2">—</span></div></div>
+            <div class="metric"><div class="mt">3台 &lt; 240%</div><div class="mv"><span id="as-r-check3">—</span></div></div>
+          </div>
+        </div>
+        <div class="rg-sec">
+          <div class="shdr">📐 多台配置</div>
+          <div class="cg">
+            <div class="metric"><div class="mt">X 方向台數</div><div class="mv"><span id="as-r-nx">—</span> <span class="mu">台</span></div></div>
+            <div class="metric"><div class="mt">Y 方向台數</div><div class="mv"><span id="as-r-ny">—</span> <span class="mu">台</span></div></div>
+            <div class="metric"><div class="mt">總相機數</div><div class="mv"><span id="as-r-total">—</span> <span class="mu">台</span></div></div>
+            <div class="metric"><div class="mt">每台 X 佔屏比</div><div class="mv"><span id="as-r-per-x">—</span></div></div>
+            <div class="metric"><div class="mt">每台 Y 佔屏比</div><div class="mv"><span id="as-r-per-y">—</span></div></div>
+          </div>
+        </div>
       </div>
     </div>
   </div><!-- /#pane-area-res -->
@@ -994,12 +1065,14 @@ function refreshCamPicker(){
   cp.innerHTML='<option value="">— 手動輸入 —</option>';
   allCams().forEach((c,i)=>cp.appendChild(new Option(c.n,i)));
   cp.value=(prev!==''&&+prev<allCams().length)?prev:'';
+  refreshASCamPicker();
 }
 function refreshLensPicker(){
   const lp=document.getElementById('lens-pick'), prev=lp.value;
   lp.innerHTML='<option value="">— 手動輸入 —</option>';
   allLens().forEach((l,i)=>lp.appendChild(new Option(l.n,i)));
   lp.value=(prev!==''&&+prev<allLens().length)?prev:'';
+  refreshASLensPicker();
 }
 
 // ── Render DB lists ──
@@ -1241,7 +1314,7 @@ function setMode(m){
   document.getElementById('pane-res').style.display        = m==='scan'   ? '' : 'none';
   document.getElementById('pane-static-res').style.display = m==='static' ? '' : 'none';
   document.getElementById('pane-area-res').style.display   = m==='area'   ? '' : 'none';
-  if(m==='area') calcArea(); else calc();
+  if(m==='area') calcAS(); else calc();
 }
 
 // ── CCTV aperture stop helpers ──
@@ -1834,11 +1907,12 @@ function sv(id,val){ document.getElementById(id).value=val; }
 // EVALUATIONS
 // ═══════════════════════════════════════════
 function saveEval(){
+  if(S.mode==='area'){ saveEvalArea(); return; }
   const p=P(), r=calculate(p);
   const ci=document.getElementById('cam-pick').value;
   const li=document.getElementById('lens-pick').value;
   evals.unshift({
-    id:Date.now(),
+    id:Date.now(), mode:S.mode,
     name:document.getElementById('eval-name').value||'新評估',
     date:new Date().toLocaleString('zh-TW'),
     camera:ci!==''?allCams()[+ci].n:'手動輸入',
@@ -1849,6 +1923,41 @@ function saveEval(){
   });
   localStorage.setItem('aoi_evals',JSON.stringify(evals));
   renderEvals(); showTab('res');
+}
+function saveEvalArea(){
+  const ci=document.getElementById('as-cam-pick').value;
+  const li=document.getElementById('as-lens-pick').value;
+  const p={
+    panelX:+document.getElementById('as-panel-x').value,
+    panelY:+document.getElementById('as-panel-y').value,
+    panelRX:+document.getElementById('as-panel-rx').value,
+    panelRY:+document.getElementById('as-panel-ry').value,
+    pitch:+document.getElementById('as-pitch').value,
+    camRX:+document.getElementById('as-cam-rx').value,
+    camRY:+document.getElementById('as-cam-ry').value,
+    camPx:+document.getElementById('as-cam-px').value,
+    fl:+document.getElementById('as-fl').value,
+    minWD:+document.getElementById('as-min-wd').value,
+    limit:+document.getElementById('as-limit').value,
+  };
+  const resolution=(p.panelRX>0&&p.pitch>0)?((p.panelX*1e-3/p.panelRX)/p.pitch)*1e6:0;
+  const xFOV=p.camRX*resolution/1000, yFOV=p.camRY*resolution/1000;
+  const wd=(p.camRX>0&&p.camPx>0)?((xFOV*1e-3)*(p.fl*1e-3)/(p.camRX*p.camPx*1e-6))*1e3:0;
+  const xRatio=(xFOV>0)?p.panelX/xFOV:0, yRatio=(yFOV>0)?p.panelY/yFOV:0;
+  const nX=(p.limit>0)?Math.ceil(xRatio/p.limit):0, nY=(p.limit>0)?Math.ceil(yRatio/p.limit):0;
+  const r={resolution,xFOV,yFOV,wd,nX,nY,totalCams:nX*nY};
+  evals.unshift({
+    id:Date.now(), mode:'area',
+    name:document.getElementById('as-eval-name').value||'新評估',
+    date:new Date().toLocaleString('zh-TW'),
+    camera:ci!==''?allCams()[+ci].n:'手動輸入',
+    lens:li!==''?allLens()[+li].n:'手動輸入',
+    camIdx:ci, lensIdx:li,
+    notes:document.getElementById('as-eval-notes').value,
+    p, r
+  });
+  localStorage.setItem('aoi_evals',JSON.stringify(evals));
+  renderEvals(); showTab('hist');
 }
 function clearEvals(){
   if(!confirm('確定清除所有評估記錄？'))return;
@@ -1861,20 +1970,31 @@ function renderEvals(){
     el.innerHTML='<div class="empty">📄<br>尚無儲存的評估<br><small>在計算器完成後按「儲存評估」</small></div>';
     return;
   }
-  el.innerHTML=evals.map((e,i)=>`
+  el.innerHTML=evals.map((e,i)=>{
+    const isArea=(e.mode==='area');
+    const badge=isArea
+      ?'<span style="font-size:10px;background:#34c759;color:#fff;padding:1px 6px;border-radius:4px;margin-left:5px;">Area</span>'
+      :'<span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:4px;margin-left:5px;">掃描</span>';
+    const summary=isArea
+      ?`解析度: ${e.r.resolution!=null?e.r.resolution.toFixed(2):'—'} µm · 相機 ${e.r.totalCams??'—'} 台 (${e.r.nX??'—'}×${e.r.nY??'—'})`
+      :`TT: ${fmt(e.r.roundTT)} min · ${fmt(e.r.passes,0)} 道 · ${fmt(e.r.optRes,3)} µm/px`;
+    return `
     <div class="ec">
-      <h3>${e.name}</h3>
+      <h3>${e.name}${badge}</h3>
       <p>${e.date} · ${e.camera}</p>
-      <p>TT: ${fmt(e.r.roundTT)} min · ${fmt(e.r.passes,0)} 道 · ${fmt(e.r.optRes,3)} µm/px</p>
+      <p>${summary}</p>
       <div style="margin-top:6px;display:flex;gap:6px">
         <button class="btn-sec" style="font-size:11px" onclick="loadEval(${i})">📂 載入</button>
         <button class="btn-sec" style="font-size:11px" onclick="exportEval(${i})">📄 PDF</button>
         <button class="btn-sec" style="font-size:11px;color:#ff3b30" onclick="delEval(${i})">🗑 刪除</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function loadEval(i){
-  const e=evals[i], p=e.p;
+  const e=evals[i];
+  if(e.mode==='area'){ loadEvalArea(e); return; }
+  const p=e.p;
   sv('p-px',p.pixelSize); sv('p-rw',p.rW); sv('p-rh',p.rH);
   sv('p-fps',p.fps); sv('p-bit',p.bit);
   sv('p-mag',p.mag); sv('p-ic',p.imageCircle); sv('p-wd',p.wd);
@@ -1884,35 +2004,40 @@ function loadEval(i){
   sv('p-ac',p.acc); sv('p-ct',p.changeSlice); sv('p-bs',p.backSpeed); sv('p-ep',p.encPitch);
   syncName(e.name||'新評估');
   document.getElementById('eval-notes').value=e.notes;
-  // Restore camera / lens picker selections
   if(e.camIdx!==undefined) document.getElementById('cam-pick').value=e.camIdx;
   if(e.lensIdx!==undefined) document.getElementById('lens-pick').value=e.lensIdx;
   setCamType(p.lineScan); setColor(p.color); setBin(p.binning);
   setLensType(p.lensType||'objective'); setScanDir(p.scanAlongWidth); setScanMode(p.scanMode||'single');
-  // Restore CCTV fn select: rebuild stops from saved fn ±2 stops range
   if((p.lensType||'objective')==='cctv'){
     const li=document.getElementById('lens-pick').value;
-    if(li!==''){
-      const l=allLens()[+li];
-      const fnMin=l.fn_min??l.fn??1.4, fnMax=l.fn_max??l.fn??32;
-      buildFnStops(fnMin, fnMax);
-    } else {
-      buildFnStops(1.0, 32);
-    }
-    sv('p-fn', p.fn);
-    const sel=document.getElementById('p-fn-sel');
-    if(sel) sel.value=p.fn;
+    if(li!==''){const l=allLens()[+li];buildFnStops(l.fn_min??l.fn??1.4,l.fn_max??l.fn??32);}
+    else buildFnStops(1.0,32);
+    sv('p-fn',p.fn);
+    const sel=document.getElementById('p-fn-sel'); if(sel) sel.value=p.fn;
   }
   calc(); showTab('res');
 }
+function loadEvalArea(e){
+  const p=e.p; setMode('area');
+  sv('as-panel-x',p.panelX); sv('as-panel-y',p.panelY);
+  sv('as-panel-rx',p.panelRX); sv('as-panel-ry',p.panelRY);
+  sv('as-pitch',p.pitch);
+  sv('as-cam-rx',p.camRX); sv('as-cam-ry',p.camRY); sv('as-cam-px',p.camPx);
+  sv('as-fl',p.fl); sv('as-min-wd',p.minWD); sv('as-limit',p.limit);
+  syncNameAS(e.name||'新評估');
+  document.getElementById('as-eval-notes').value=e.notes||'';
+  if(e.camIdx!==undefined) document.getElementById('as-cam-pick').value=e.camIdx;
+  if(e.lensIdx!==undefined) document.getElementById('as-lens-pick').value=e.lensIdx;
+  calcAS(); showTab('res');
+}
 function delEval(i){ evals.splice(i,1); localStorage.setItem('aoi_evals',JSON.stringify(evals)); renderEvals(); }
-function exportEval(i){ loadEval(i); setTimeout(()=>exportPDFMode('scan'),300); }
+function exportEval(i){ loadEval(i); setTimeout(()=>exportPDFMode(evals[i]?.mode||'scan'),300); }
 function exportPDF(){ exportPDFMode(S.mode); }
 async function exportPDFMode(mode){
-  const paneId = mode==='static' ? 'pane-static-res' : 'pane-res';
+  const paneId = mode==='area' ? 'pane-area-res' : mode==='static' ? 'pane-static-res' : 'pane-res';
   const el = document.getElementById(paneId).querySelector('.rpt-card');
   const date = new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
-  const projName = (document.getElementById('rpt-name')||{}).value||'AOI評估';
+  const projName = (document.getElementById('rpt-name')||document.getElementById('as-rpt-proj')||{}).value||'AOI評估';
 
   const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false });
   const imgData = canvas.toDataURL('image/jpeg', 0.98);
@@ -2217,118 +2342,185 @@ function closeImportModal(){
 }
 
 // ═══════════════════════════════════════════
-// AREA MODE CALC
+// AREA SHOT: DB PICKERS
 // ═══════════════════════════════════════════
-function calcArea(){
-  const v = id => +document.getElementById(id).value || 0;
-  const xaa   = v('ar-xaa'),  yaa    = v('ar-yaa');
-  const pitch  = v('ar-pitch');           // µm
-  const cx     = v('ar-cx'),  cy     = v('ar-cy');
-  const pix    = v('ar-pix');             // µm
-  const fl     = v('ar-fl');              // mm
-  const minWD  = v('ar-minwd');           // mm
-
-  if(!pitch||!pix||!fl||!cx||!cy){ return; }
-
-  const mag    = pix / pitch;
-  const wd     = fl * (mag + 1) / mag;                 // mm
-  const sysRes = pix / mag;                             // µm = pitch
-  const xfov   = cx * pix / mag / 1000;                // mm
-  const yfov   = cy * pix / mag / 1000;                // mm
-  const xang   = Math.atan(xfov/2 / wd) * 180 / Math.PI;
-  const yang   = Math.atan(yfov/2 / wd) * 180 / Math.PI;
-  const wdOk   = wd >= minWD;
-  const nx     = xaa > 0 ? Math.ceil(xaa / xfov) : 0;
-  const ny     = yaa > 0 ? Math.ceil(yaa / yfov) : 0;
-  const xcov   = xfov / xaa * 100;
-  const ycov   = yfov / yaa * 100;
-  const pitchRatio = pix / pitch; // sampling ratio (always = mag, here for clarity)
-
-  const s = id => document.getElementById(id);
-  const fmt = (v,d=2) => isFinite(v) ? v.toFixed(d) : '—';
-
-  s('ar-sysres').textContent   = fmt(sysRes,2);
-  s('ar-mag').textContent      = fmt(mag,4);
-  s('ar-xfov').textContent     = fmt(xfov,2);
-  s('ar-yfov').textContent     = fmt(yfov,2);
-  s('ar-wd').textContent       = fmt(wd,1);
-  s('ar-wdcheck').textContent  = wdOk ? '✅ 安全' : '⚠️ 過近';
-  s('ar-wdcheck').style.color  = wdOk ? 'var(--accent)' : '#ff3b30';
-  s('ar-xang').textContent     = fmt(xang,2);
-  s('ar-yang').textContent     = fmt(yang,2);
-  s('ar-nx').textContent       = nx || '—';
-  s('ar-ny').textContent       = ny || '—';
-  s('ar-total').textContent    = (nx && ny) ? nx*ny : '—';
-  s('ar-xcov').textContent     = fmt(xcov,1);
-  s('ar-ycov').textContent     = fmt(ycov,1);
-  s('ar-pitchcheck').textContent = fmt(pitchRatio,3);
-
-  // Date
-  s('ar-rpt-date').textContent = new Date().toLocaleDateString('zh-TW');
-
-  // Draw diagram
-  drawAreaDiagram(nx, ny, xfov, yfov, xaa, yaa);
+function initASPickers(){
+  const cp = document.getElementById('as-cam-pick');
+  allCams().forEach((c,i) => cp.appendChild(new Option(c.n,i)));
+  const lp = document.getElementById('as-lens-pick');
+  allLens().forEach((l,i) => lp.appendChild(new Option(l.n,i)));
+}
+function refreshASCamPicker(){
+  const cp=document.getElementById('as-cam-pick'), prev=cp.value;
+  cp.innerHTML='<option value="">— 手動輸入 —</option>';
+  allCams().forEach((c,i)=>cp.appendChild(new Option(c.n,i)));
+  cp.value=(prev!==''&&+prev<allCams().length)?prev:'';
+}
+function refreshASLensPicker(){
+  const lp=document.getElementById('as-lens-pick'), prev=lp.value;
+  lp.innerHTML='<option value="">— 手動輸入 —</option>';
+  allLens().forEach((l,i)=>lp.appendChild(new Option(l.n,i)));
+  lp.value=(prev!==''&&+prev<allLens().length)?prev:'';
+}
+function applyCameraAS(){
+  const i=document.getElementById('as-cam-pick').value; if(i==='')return;
+  const c=allCams()[+i];
+  document.getElementById('as-cam-rx').value = c.rw;
+  document.getElementById('as-cam-ry').value = c.rh || c.rw;
+  document.getElementById('as-cam-px').value = c.px;
+  calcAS();
+}
+function applyLensAS(){
+  const i=document.getElementById('as-lens-pick').value; if(i==='')return;
+  const l=allLens()[+i];
+  document.getElementById('as-fl').value = l.fl || 50;
+  document.getElementById('as-min-wd').value = l.wd || 100;
+  calcAS();
+}
+function syncNameAS(val){
+  document.getElementById('as-eval-name').value = val;
+  document.getElementById('as-rpt-proj').value  = val;
 }
 
-function drawAreaDiagram(nx, ny, xfov, yfov, xaa, yaa){
-  const cv = document.getElementById('ar-dg');
-  if(!cv) return;
-  const ctx = cv.getContext('2d');
-  const W = cv.width, H = cv.height;
-  ctx.clearRect(0,0,W,H);
+// ═══════════════════════════════════════════
+// AREA SHOT: CALCULATION ENGINE
+// ═══════════════════════════════════════════
+function calcAS(){
+  const panelX  = +document.getElementById('as-panel-x').value;
+  const panelY  = +document.getElementById('as-panel-y').value;
+  const panelRX = +document.getElementById('as-panel-rx').value;
+  const panelRY = +document.getElementById('as-panel-ry').value;
+  const pitch   = +document.getElementById('as-pitch').value;
+  const camRX   = +document.getElementById('as-cam-rx').value;
+  const camRY   = +document.getElementById('as-cam-ry').value;
+  const camPx   = +document.getElementById('as-cam-px').value;
+  const fl      = +document.getElementById('as-fl').value;
+  const minWD   = +document.getElementById('as-min-wd').value;
+  const limit   = +document.getElementById('as-limit').value;
 
-  const pad = 24;
-  const scaleX = (W - pad*2) / (xaa||1);
-  const scaleY = (H - pad*2) / (yaa||1);
-  const sc = Math.min(scaleX, scaleY);
+  const resolution = (panelRX>0&&pitch>0) ? ((panelX*1e-3/panelRX)/pitch)*1e6 : 0;
+  const xFOV = camRX * resolution / 1000;
+  const yFOV = camRY * resolution / 1000;
+  const wd   = (camRX>0&&camPx>0) ? ((xFOV*1e-3)*(fl*1e-3)/(camRX*camPx*1e-6))*1e3 : 0;
+  const safeWD = minWD + 30;
+  const xAngle = (wd>0) ? 2*Math.atan((xFOV/2)/wd)*180/Math.PI : 0;
+  const xRatio = (xFOV>0) ? panelX/xFOV : 0;
+  const yRatio = (yFOV>0) ? panelY/yFOV : 0;
+  const wdOK   = wd > safeWD;
+  const pitchOK = pitch >= 3;
+  const nX = (limit>0) ? Math.ceil(xRatio/limit) : 0;
+  const nY = (limit>0) ? Math.ceil(yRatio/limit) : 0;
+  const totalCams = nX * nY;
+  const perXRatio = (nX>0) ? xRatio/nX : 0;
+  const perYRatio = (nY>0) ? yRatio/nY : 0;
 
-  const ox = (W - xaa*sc)/2;
-  const oy = (H - yaa*sc)/2;
+  const f = (v,d=2) => (!isFinite(v)||v===0) ? '—' : v.toFixed(d);
+  const ci = document.getElementById('as-cam-pick').value;
+  const li = document.getElementById('as-lens-pick').value;
+  set('as-rpt-cam',  ci!=='' ? allCams()[+ci].n : '手動輸入');
+  set('as-rpt-lens', li!=='' ? allLens()[+li].n : '手動輸入');
+  set('as-rpt-panel', `${panelX} × ${panelY} mm (${panelRX}×${panelRY})`);
+  set('as-rpt-pitch', `${pitch} px`);
+  set('as-rpt-qty',  `${totalCams} 台`);
+  set('as-rpt-arr',  `${nX} × ${nY}`);
+  const wdOkEl = document.getElementById('as-rpt-wd-ok');
+  if(wdOkEl){ wdOkEl.textContent=wdOK?'✓ 可用':'✗ 不可用'; wdOkEl.style.color=wdOK?'#34c759':'#ff3b30'; }
+  const datEl = document.getElementById('as-rpt-date');
+  if(datEl) datEl.textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
 
-  // Panel outline
-  ctx.strokeStyle = '#007aff';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(ox, oy, xaa*sc, yaa*sc);
-  ctx.fillStyle = 'rgba(0,122,255,0.05)';
-  ctx.fillRect(ox, oy, xaa*sc, yaa*sc);
+  set('as-r-res',     f(resolution,2));
+  set('as-r-xfov',    f(xFOV,2));
+  set('as-r-yfov',    f(yFOV,2));
+  set('as-r-wd',      f(wd,2));
+  set('as-r-safe-wd', f(safeWD,0));
+  set('as-r-xangle',  f(xAngle,2));
+  set('as-r-xratio',  f(xRatio,4));
+  set('as-r-yratio',  f(yRatio,4));
 
-  // Camera cells
-  if(nx>0 && ny>0 && xfov>0 && yfov>0){
-    const colors = ['rgba(255,149,0,0.15)','rgba(52,199,89,0.15)','rgba(255,45,85,0.15)','rgba(90,200,250,0.15)'];
-    for(let iy=0; iy<ny; iy++){
-      for(let ix=0; ix<nx; ix++){
-        const x = ox + ix*xfov*sc;
-        const y = oy + iy*yfov*sc;
-        const w = Math.min(xfov*sc, xaa*sc - ix*xfov*sc);
-        const h = Math.min(yfov*sc, yaa*sc - iy*yfov*sc);
-        ctx.fillStyle = colors[(iy*nx+ix)%colors.length];
-        ctx.fillRect(x, y, w, h);
-        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, w, h);
-        if(w > 18 && h > 12){
-          ctx.fillStyle = '#333';
-          ctx.font = `${Math.max(9, Math.min(11, w/4))}px -apple-system,sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(`${iy*nx+ix+1}`, x+w/2, y+h/2);
-        }
-      }
-    }
+  const pitchEl = document.getElementById('as-r-pitch-ok');
+  if(pitchEl){ pitchEl.textContent=pitchOK?'✓ ≥ 3':'✗ < 3'; pitchEl.style.color=pitchOK?'#34c759':'#ff3b30'; }
+
+  const maxRatio = Math.max(xRatio*100, yRatio*100);
+  const setCheck = (id,val,threshold) => {
+    const el=document.getElementById(id); if(!el) return;
+    const ok=val<threshold;
+    el.textContent=f(val,1)+'% '+(ok?'✓':'✗');
+    el.style.color=ok?'#34c759':'#ff3b30';
+  };
+  setCheck('as-r-check1', maxRatio, 80);
+  setCheck('as-r-check2', maxRatio, 160);
+  setCheck('as-r-check3', maxRatio, 240);
+
+  set('as-r-nx',    f(nX,0));
+  set('as-r-ny',    f(nY,0));
+  set('as-r-total', f(totalCams,0));
+  set('as-r-per-x', f(perXRatio,4));
+  set('as-r-per-y', f(perYRatio,4));
+
+  const vwAS = document.getElementById('as-vwarn');
+  if(!pitchOK){
+    vwAS.classList.remove('hide'); vwAS.style.display='flex';
+    document.getElementById('as-vwarn-msg').textContent='Pitch 建議 ≥ 3，目前 Pitch = '+pitch;
+  } else if(!wdOK){
+    vwAS.classList.remove('hide'); vwAS.style.display='flex';
+    document.getElementById('as-vwarn-msg').textContent=`工作距離不足！WD ${f(wd,1)} mm < 安全距離 ${safeWD} mm`;
+  } else {
+    vwAS.classList.add('hide'); vwAS.style.display='none';
   }
 
-  // Labels
-  ctx.fillStyle = '#007aff';
-  ctx.font = '10px -apple-system,sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'bottom';
-  ctx.fillText(`${xaa} mm`, ox + xaa*sc/2, oy - 4);
-  ctx.save();
-  ctx.translate(ox - 6, oy + yaa*sc/2);
-  ctx.rotate(-Math.PI/2);
-  ctx.textBaseline = 'bottom';
-  ctx.fillText(`${yaa} mm`, 0, 0);
+  drawASDiagram(nX, nY, panelX, panelY);
+}
+
+// ═══════════════════════════════════════════
+// AREA SHOT: DIAGRAM
+// ═══════════════════════════════════════════
+function drawASDiagram(nX, nY, panelW, panelH){
+  const canvas = document.getElementById('as-dg');
+  if(!canvas) return;
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  if(!W||!H) return;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  const accent='#007aff';
+  nX=Math.max(1,nX||1); nY=Math.max(1,nY||1);
+  const pad=20, dW=W-pad*2, dH=H-pad*2;
+  const scale=Math.min(dW/panelW,dH/panelH);
+  const rW=panelW*scale, rH=panelH*scale;
+  const ox=pad+(dW-rW)/2, oy=pad+(dH-rH)/2;
+  ctx.fillStyle='rgba(0,0,0,.03)';
+  rrect(ctx,ox,oy,rW,rH,3); ctx.fill();
+  ctx.save(); rrect(ctx,ox,oy,rW,rH,0); ctx.clip();
+  const sat=68, lit=55;
+  for(let yi=0;yi<nY;yi++){
+    for(let xi=0;xi<nX;xi++){
+      const idx=yi*nX+xi;
+      const hue=(idx*137.508)%360;
+      const bx=ox+xi*rW/nX, by=oy+yi*rH/nY;
+      const bw=rW/nX, bh=rH/nY;
+      ctx.fillStyle=`hsla(${hue},${sat}%,${lit}%,0.55)`;
+      ctx.fillRect(bx,by,bw,bh);
+      ctx.fillStyle='rgba(0,0,0,.5)';
+      ctx.font=(bw>40&&bh>20)?'10px -apple-system,sans-serif':'7px -apple-system,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(`C${idx+1}`,bx+bw/2,by+bh/2);
+    }
+  }
   ctx.restore();
+  ctx.strokeStyle='rgba(0,0,0,.20)'; ctx.lineWidth=0.75;
+  for(let i=0;i<=nX;i++){ const x=ox+i*rW/nX; ctx.beginPath();ctx.moveTo(x,oy);ctx.lineTo(x,oy+rH);ctx.stroke(); }
+  for(let i=0;i<=nY;i++){ const y=oy+i*rH/nY; ctx.beginPath();ctx.moveTo(ox,y);ctx.lineTo(ox+rW,y);ctx.stroke(); }
+  ctx.strokeStyle='rgba(0,0,0,.28)'; ctx.lineWidth=1;
+  rrect(ctx,ox,oy,rW,rH,3); ctx.stroke();
+  ctx.fillStyle=accent; ctx.font='9px -apple-system,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText(`${panelW} mm`,ox+rW/2,oy+rH+4);
+  ctx.save(); ctx.translate(ox-6,oy+rH/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText(`${panelH} mm`,0,0); ctx.restore();
+  const cap=document.getElementById('as-dg-caption');
+  if(cap){ cap.innerHTML=`<span>${nX*nY}台 (${nX}×${nY})</span><span>·</span><span>${panelW} × ${panelH} mm</span>`; }
 }
 
 // ═══════════════════════════════════════════
@@ -2393,10 +2585,11 @@ function loadRptMeta(){
 // INIT
 // ═══════════════════════════════════════════
 initPickers();
+initASPickers();
 loadRptMeta();
 initCardCfg();
 calc();
-window.addEventListener('resize', ()=>{ drawDiagram(); if(S.mode==='static') calcStatic(); });
+window.addEventListener('resize', ()=>{ drawDiagram(); if(S.mode==='static') calcStatic(); if(S.mode==='area') calcAS(); });
 </script>
 
 <!-- ── Undo Toast ── -->
