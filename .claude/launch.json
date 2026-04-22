@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aoi-web",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8877", "--directory", "/Users/minxuchiang/Desktop/ClaudeBot/aoi-calculator"],
+      "port": 8877
+    }
+  ]
+}

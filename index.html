@@ -899,24 +899,12 @@ header p{font-size:10px;color:var(--sub);}
           </div>
         </div>
         <div class="rg-sec">
-          <div class="shdr">📊 單台評估</div>
+          <div class="shdr">📊 覆蓋評估</div>
           <div class="cg">
             <div class="metric"><div class="mt">X 佔屏比</div><div class="mv"><span id="as-r-xratio">—</span></div></div>
             <div class="metric"><div class="mt">Y 佔屏比</div><div class="mv"><span id="as-r-yratio">—</span></div></div>
             <div class="metric"><div class="mt">Pitch 檢查</div><div class="mv"><span id="as-r-pitch-ok">—</span></div></div>
-            <div class="metric"><div class="mt">1台 &lt; 80%</div><div class="mv"><span id="as-r-check1">—</span></div></div>
-            <div class="metric"><div class="mt">2台 &lt; 160%</div><div class="mv"><span id="as-r-check2">—</span></div></div>
-            <div class="metric"><div class="mt">3台 &lt; 240%</div><div class="mv"><span id="as-r-check3">—</span></div></div>
-          </div>
-        </div>
-        <div class="rg-sec">
-          <div class="shdr">📐 多台配置</div>
-          <div class="cg">
-            <div class="metric"><div class="mt">X 方向台數</div><div class="mv"><span id="as-r-nx">—</span> <span class="mu">台</span></div></div>
-            <div class="metric"><div class="mt">Y 方向台數</div><div class="mv"><span id="as-r-ny">—</span> <span class="mu">台</span></div></div>
-            <div class="metric"><div class="mt">總相機數</div><div class="mv"><span id="as-r-total">—</span> <span class="mu">台</span></div></div>
-            <div class="metric"><div class="mt">每台 X 佔屏比</div><div class="mv"><span id="as-r-per-x">—</span></div></div>
-            <div class="metric"><div class="mt">每台 Y 佔屏比</div><div class="mv"><span id="as-r-per-y">—</span></div></div>
+            <div class="metric"><div class="mt">建議最少台數</div><div class="mv"><span id="as-r-min-cams">—</span></div></div>
           </div>
         </div>
       </div>
@@ -2440,22 +2428,16 @@ function calcAS(){
   const pitchEl = document.getElementById('as-r-pitch-ok');
   if(pitchEl){ pitchEl.textContent=pitchOK?'✓ ≥ 3':'✗ < 3'; pitchEl.style.color=pitchOK?'#34c759':'#ff3b30'; }
 
-  const maxRatio = Math.max(xRatio*100, yRatio*100);
-  const setCheck = (id,val,threshold) => {
-    const el=document.getElementById(id); if(!el) return;
-    const ok=val<threshold;
-    el.textContent=f(val,1)+'% '+(ok?'✓':'✗');
-    el.style.color=ok?'#34c759':'#ff3b30';
-  };
-  setCheck('as-r-check1', maxRatio, 80);
-  setCheck('as-r-check2', maxRatio, 160);
-  setCheck('as-r-check3', maxRatio, 240);
-
-  set('as-r-nx',    f(nX,0));
-  set('as-r-ny',    f(nY,0));
-  set('as-r-total', f(totalCams,0));
-  set('as-r-per-x', f(perXRatio,4));
-  set('as-r-per-y', f(perYRatio,4));
+  const minEl = document.getElementById('as-r-min-cams');
+  if(minEl){
+    if(totalCams>0){
+      minEl.textContent = `${totalCams} 台 (${nX}×${nY})`;
+      minEl.style.color = '';
+    } else {
+      minEl.textContent = '—';
+      minEl.style.color = '';
+    }
+  }
 
   const vwAS = document.getElementById('as-vwarn');
   if(!pitchOK){
